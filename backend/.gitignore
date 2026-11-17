@@ -1,0 +1,45 @@
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+/auth.json
+/build
+/node_modules
+/phpunit.xml
+/tests/coverage*
+/vendor
+
+# Files CodeIgniter writes while it runs. The folders and their index.html stay, because CodeIgniter needs them.
+/writable/cache/*
+!/writable/cache/index.html
+/writable/debugbar/*
+!/writable/debugbar/index.html
+/writable/logs/*
+!/writable/logs/index.html
+/writable/session/*
+!/writable/session/index.html
+/writable/uploads/*
+!/writable/uploads/index.html
+
+# City Florist
+/public/uploads/*
+!/public/uploads/.gitkeep
+# Built React apps, copied in only by the deploy workflow
+/public/index.html
+/public/assets
+/public/admin.html
+/public/admin-assets
+/public/favicon.svg
+/public/robots.txt
+/public/img
+/public/catalog

@@ -1,0 +1,131 @@
+name: Deploy to Hostinger
+
+# Every push to main builds the two React apps (frontend-user, frontend-dashboard), installs the CodeIgniter
+# backend's dependencies and uploads everything to Hostinger over FTP. Only changed files are uploaded.
+# .env, public/uploads/ (product photos) and the logs, sessions and cache in writable/ on the server are never touched.
+#
+# Server layout (public_html/):
+#   .htaccess           sends every request into public/
+#   app/ vendor/ writable/ spark …   CodeIgniter (backend/)
+#   public/index.php    CodeIgniter, answers /api/*
+#   public/index.html   the website (frontend-user), with public/assets/
+#   public/admin.html   the owner dashboard (frontend-dashboard), served at /admin, with public/admin-assets/
+#   public/uploads/     product photos (created by the dashboard, never overwritten)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # The tests run against MariaDB, the MySQL server Hostinger uses (the app is MySQL-only).
+    services:
+      mysql:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: cityflorist_ci_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend-user/package-lock.json
+            frontend-dashboard/package-lock.json
+
+      - name: Build website (frontend-user)
+        working-directory: frontend-user
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build dashboard (frontend-dashboard)
+        working-directory: frontend-dashboard
+        run: |
+          npm ci
+          npm run build
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: intl, gd, mysqli, mbstring, curl
+          coverage: none
+          tools: composer:v2
+
+      - name: Test backend
+        working-directory: backend
+        # CodeIgniter reads database.tests.<name> from these (BaseConfig: database_tests_<name>). A database.tests
+        # line in .env would win over them, so the copied .env loses those lines; the tests use the
+        # cityflorist_ci_test database.
+        env:
+          database_tests_hostname: 127.0.0.1
+          database_tests_port: 3306
+          database_tests_database: cityflorist_ci_test
+          database_tests_username: root
+          database_tests_password: root
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          cp .env.example .env
+          sed -i '/^database\.tests\./d' .env
+          php spark key:generate
+          composer test
+
+      - name: Install production dependencies
+        working-directory: backend
+        run: |
+          rm .env
+          composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Assemble site folder
+        run: |
+          mkdir -p deploy
+          cp -r backend/. deploy/
+          rm -rf deploy/tests deploy/build deploy/.env deploy/phpunit.xml deploy/phpunit.xml.dist deploy/.phpunit.result.cache deploy/public/uploads/*
+          mv deploy/deploy/.htaccess deploy/.htaccess && rm -rf deploy/deploy
+          # Empty runtime folders still have to exist on the server: CodeIgniter writes its cache, logs and
+          # sessions there (and won't create writable/cache itself). Each keeps its index.html and a .keep file.
+          for d in cache debugbar logs session uploads; do
+            mkdir -p "deploy/writable/$d"
+            find "deploy/writable/$d" -mindepth 1 -maxdepth 1 ! -name index.html -exec rm -rf {} +
+            touch "deploy/writable/$d/.keep"
+          done
+          mkdir -p deploy/public/uploads && touch deploy/public/uploads/.keep
+          cp -r frontend-user/dist/. deploy/public/
+          cp -r frontend-dashboard/dist/. deploy/public/
+          find deploy -maxdepth 2 -not -path 'deploy/vendor/*' | sort
+
+      - name: Upload to Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}
+          local-dir: ./deploy/
+          # The action only ever deletes files it uploaded, so files the server creates itself are safe anyway;
+          # the writable/ lines below (logs, sessions, rate-limit counters, debug toolbar) are belt and braces.
+          # The writable/ folders themselves are deliberately not excluded, so their index.html and .keep
+          # placeholders create the folders CodeIgniter needs.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .env
+            public/uploads/**
+            writable/cache/ratelimit_*
+            writable/debugbar/debugbar_*
+            writable/logs/log-*
+            writable/session/city_florist_session*

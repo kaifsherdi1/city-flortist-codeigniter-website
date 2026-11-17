@@ -1,0 +1,10 @@
+node_modules/
+/frontend-user/dist/
+/frontend-dashboard/dist/
+/deploy/
+.ftp-deploy-sync-state.json
+# backend/ (CodeIgniter) has its own .gitignore: .env, vendor/, writable/ runtime files, public/uploads/*
+npm.log
+vite.log
+.DS_Store
+Thumbs.db

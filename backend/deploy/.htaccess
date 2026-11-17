@@ -1,0 +1,19 @@
+# City Florist: goes in public_html/ on Hostinger, next to the CodeIgniter app (app/, vendor/, writable/, public/, .env …).
+# Every request is handed to CodeIgniter's public/ folder, so .env, app/, vendor/ and writable/ are never reachable.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Always use HTTPS
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Belt and braces in case rewriting is ever switched off
+<FilesMatch "^(\.env.*|\.ftp-deploy-sync-state\.json|composer\..*|spark|phpunit.*)$">
+  Require all denied
+</FilesMatch>

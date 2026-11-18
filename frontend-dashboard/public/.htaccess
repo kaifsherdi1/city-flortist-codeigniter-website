@@ -1,0 +1,49 @@
+# City Florist dashboard (frontend-dashboard build): goes in public_html/admin/ on Hostinger, the folder of the
+# admin.cityfloristhubli.com subdomain.
+Options -Indexes -MultiViews
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # This folder sits inside the main website's public_html, so https://cityfloristhubli.com/admin/… reaches it too:
+  # send those visitors to the dashboard's own address.
+  RewriteCond %{HTTP_HOST} !^admin\. [NC]
+  RewriteRule ^(.*)$ https://admin.cityfloristhubli.com/$1 [L,R=301]
+
+  # Always use HTTPS
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Real files (JS, CSS, icons) are served directly
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  # Every other URL is a page of the dashboard (/login, /products/12, /orders …). Missing scripts stay a 404.
+  RewriteCond %{REQUEST_URI} !^/admin-assets/
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # The owner's dashboard should never appear in search results.
+  Header always set X-Robots-Tag "noindex, nofollow"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  # Only the dashboard's own scripts may run. Data and product photos come from the API subdomain.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://api.cityfloristhubli.com; connect-src 'self' https://api.cityfloristhubli.com; frame-src https://www.google.com https://maps.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  <FilesMatch "\.(js|css|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>

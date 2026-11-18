@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// The public website, served at /. The owner dashboard is its own app in ../frontend-dashboard (served at /admin).
+// The public website, served at /. The owner dashboard is its own app in ../frontend-dashboard.
+//
+// Live: https://cityfloristhubli.com (public_html/), calling the API at https://api.cityfloristhubli.com and linking
+// to the dashboard at https://admin.cityfloristhubli.com. Those addresses come from .env.production.
 //
 // Development: the CodeIgniter backend runs on :8000 (cd backend && php spark serve --host 127.0.0.1 --port 8000)
 // and the dashboard's dev server on :5174 (cd frontend-dashboard && npm run dev). /admin is passed through to it,

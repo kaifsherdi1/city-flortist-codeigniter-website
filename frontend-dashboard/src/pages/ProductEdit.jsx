@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { del, get, post, upload } from '../api.js';
 import { useFlash, useLoad, useReport } from '../session.jsx';
 import { Loading } from '../components/Layout.jsx';
+import { SITE_URL } from '../urls.js';
 
 const EMPTY = { name: '', category_id: '', description: '', price: '', sale_price: '', is_active: true, is_featured: false, images: [] };
 
@@ -81,7 +82,7 @@ export default function ProductEdit() {
       <div className="page-head">
         <h1>{id ? 'Edit product' : 'Add product'}</h1>
         <div className="actions">
-          {id && product.slug && <a className="btn ghost" target="_blank" rel="noreferrer" href={`/product/${product.slug}`}>View on site ↗</a>}
+          {id && product.slug && <a className="btn ghost" target="_blank" rel="noreferrer" href={`${SITE_URL}/product/${product.slug}`}>View on site ↗</a>}
           <Link className="btn ghost" to="/products">← All products</Link>
         </div>
       </div>

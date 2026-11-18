@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\ApiController;
 use App\Libraries\Catalog;
 use App\Libraries\Images;
+use App\Libraries\Text;
 use App\Models\OfferModel;
 use App\Models\ProductImageModel;
 use App\Models\ProductModel;
@@ -68,7 +69,7 @@ class Products extends ApiController
                 'active'     => (bool) $p['is_active'],
                 'featured'   => (bool) $p['is_featured'],
                 'ready'      => isset($ready[(int) $p['id']]),
-                'thumb'      => $p['thumb'] ? '/' . $p['thumb'] : null,
+                'thumb'      => Text::publicPath($p['thumb']),
             ], $rows),
         ]);
     }
@@ -304,8 +305,8 @@ class Products extends ApiController
             'is_featured' => (bool) $p['is_featured'],
             'images'      => array_map(static fn (array $i): array => [
                 'id'    => (int) $i['id'],
-                'src'   => '/' . $i['path'],
-                'thumb' => '/' . $i['thumb_path'],
+                'src'   => Text::publicPath($i['path']),
+                'thumb' => Text::publicPath($i['thumb_path']),
             ], $products->sortedImages($id)),
         ];
     }

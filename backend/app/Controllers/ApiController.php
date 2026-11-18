@@ -94,6 +94,18 @@ abstract class ApiController extends Controller
         return Http::redirect($location);
     }
 
+    /** A dashboard page ("login?error=…"): /admin/login on this domain, or on florist.adminUrl (its own subdomain). */
+    protected function adminPage(string $path = ''): string
+    {
+        return config(\Config\Florist::class)->adminPage($path);
+    }
+
+    /** A page of the public website ("/account"): on this domain, or on florist.siteUrl (its own domain). */
+    protected function websitePage(string $path): string
+    {
+        return config(\Config\Florist::class)->websitePage($path);
+    }
+
     // ------------------------------------------------------------------------------------------------------
     // Input, like Laravel's $request->input(): the JSON body or form fields, then the query string. Strings are
     // trimmed (except passwords) and empty strings become null, as Laravel's TrimStrings and

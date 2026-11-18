@@ -49,6 +49,8 @@ class SecurityHeaders implements FilterInterface
         if (! $request instanceof IncomingRequest) {
             return;
         }
+        // The website and dashboard on their own subdomains may read the API's answers (see ApiCors).
+        ApiCors::headers($request, $response);
         if ($request->isSecure()) {
             $response->setHeader('Strict-Transport-Security', 'max-age=31536000');
         }

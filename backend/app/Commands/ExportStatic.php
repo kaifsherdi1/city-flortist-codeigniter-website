@@ -71,6 +71,11 @@ class ExportStatic extends BaseCommand
     /** Copies an /uploads/... file into the export and returns its new public path. */
     private function asset(?string $path): ?string
     {
+        // With florist.separateDomains the API gives absolute photo URLs (https://api.example.com/uploads/...).
+        $base = rtrim(config('App')->baseURL, '/');
+        if ($path && $base !== '' && str_starts_with($path, $base . '/uploads/')) {
+            $path = substr($path, strlen($base));
+        }
         if (! $path || ! str_starts_with($path, '/uploads/')) {
             return $path;
         }

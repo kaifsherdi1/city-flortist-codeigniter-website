@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\ApiController;
 use App\Libraries\Images;
+use App\Libraries\Text;
 use App\Models\OfferModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use Throwable;
@@ -184,7 +185,7 @@ class Offers extends ApiController
             'starts_at'    => date('Y-m-d\TH:i', strtotime((string) $o['starts_at'])),
             'ends_at'      => date('Y-m-d\TH:i', strtotime((string) $o['ends_at'])),
             'is_active'    => (bool) $o['is_active'],
-            'image'        => $o['image'] ? '/' . $o['image'] : null,
+            'image'        => Text::publicPath($o['image']),
             'state'        => OfferModel::state($o),
         ];
     }

@@ -276,7 +276,7 @@ class Auth extends ApiController
         $google   = service('googleOAuth');
         $register = $this->query('intent') === 'register';
         if (! $google->configured()) {
-            $page = $register ? '/admin/register' : '/admin/login';
+            $page = $this->adminPage($register ? 'register' : 'login');
 
             return $this->redirectTo($page . '?error=' . rawurlencode('Google sign-in is not set up on this server yet.'));
         }
@@ -290,7 +290,7 @@ class Auth extends ApiController
     {
         $google = service('googleOAuth');
         if (! $google->configured()) {
-            return $this->redirectTo('/admin/login');
+            return $this->redirectTo($this->adminPage('login'));
         }
 
         try {
@@ -298,7 +298,7 @@ class Auth extends ApiController
         } catch (Throwable $e) {
             $this->report($e);
 
-            return $this->redirectTo('/admin/login?error=' . rawurlencode('Google sign-in was cancelled or failed. Please try again.'));
+            return $this->redirectTo($this->adminPage('login?error=' . rawurlencode('Google sign-in was cancelled or failed. Please try again.')));
         }
 
         $verified = (bool) ($profile['email_verified'] ?? false);
@@ -318,26 +318,26 @@ class Auth extends ApiController
                 'status'        => 'pending',
             ]);
 
-            return $this->redirectTo('/admin/login?notice=' . rawurlencode('Account created. The shop owner needs to approve it before you can log in with Google.'));
+            return $this->redirectTo($this->adminPage('login?notice=' . rawurlencode('Account created. The shop owner needs to approve it before you can log in with Google.')));
         }
         if (! $admin) {
-            return $this->redirectTo('/admin/login?error=' . rawurlencode('That Google account has no dashboard access. Use “Create a staff account”, or the email saved in Settings → Login details.'));
+            return $this->redirectTo($this->adminPage('login?error=' . rawurlencode('That Google account has no dashboard access. Use “Create a staff account”, or the email saved in Settings → Login details.')));
         }
         if (! AdminModel::canLogIn($admin)) {
-            return $this->redirectTo('/admin/login?error=' . rawurlencode(($admin['status'] ?? null) === 'pending'
+            return $this->redirectTo($this->adminPage('login?error=' . rawurlencode(($admin['status'] ?? null) === 'pending'
                 ? 'Your staff account is waiting for the shop owner’s approval.'
-                : 'This account has been switched off by the shop owner.'));
+                : 'This account has been switched off by the shop owner.')));
         }
 
         if (AdminModel::hasTwoFactor($admin)) {
             $this->regenerateSession();
             session()->set('two_factor_pending', ['id' => (int) $admin['id'], 'remember' => true, 'starting' => false, 'until' => time() + 300]);
 
-            return $this->redirectTo('/admin/login');
+            return $this->redirectTo($this->adminPage('login'));
         }
         $this->completeLogin($admin, true, false);
 
-        return $this->redirectTo('/admin');
+        return $this->redirectTo($this->adminPage());
     }
 
     // ------------------------------------------------------------------------------------------------------

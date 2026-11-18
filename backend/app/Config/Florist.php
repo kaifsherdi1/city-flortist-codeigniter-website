@@ -12,6 +12,27 @@ class Florist extends BaseConfig
     /** Public URL of the website, no trailing slash. Used for links in emails, the sitemap and WhatsApp orders. */
     public string $siteUrl = 'http://localhost:5173';
 
+    /**
+     * Public URL of the owner dashboard when it has its own subdomain (e.g. https://admin.example.com), no trailing
+     * slash. Empty: the dashboard is <siteUrl>/admin, on the same domain as the website.
+     */
+    public string $adminUrl = '';
+
+    /**
+     * true when the website, the dashboard and this backend each have their own (sub)domain, e.g. example.com,
+     * admin.example.com and api.example.com. Then the two sites may call this API from the browser (CORS), photo
+     * URLs in API answers are absolute (<app.baseURL>uploads/…), and Google sign-in sends people back to siteUrl /
+     * adminUrl. false: everything is served from one domain.
+     * The login cookies must then be shared by all three: set cookie.domain = .example.com in .env.
+     */
+    public bool $separateDomains = false;
+
+    /**
+     * Extra browser origins allowed to call the API when separateDomains is on, comma-separated
+     * (e.g. http://localhost:5173 while testing). siteUrl, its www. twin and adminUrl are always allowed.
+     */
+    public string $corsOrigins = '';
+
     /** First admin login, created by the installer (/admin → Install). Change the password in Settings after first login. */
     public string $adminUsername = 'admin';
 
@@ -71,6 +92,64 @@ class Florist extends BaseConfig
     public function isDebug(): bool
     {
         return $this->debug ?? (defined('CI_DEBUG') && CI_DEBUG);
+    }
+
+    /** The dashboard's address, no trailing slash: adminUrl, or <siteUrl>/admin. Used in emailed links. */
+    public function adminBase(): string
+    {
+        return $this->adminUrl !== '' ? rtrim($this->adminUrl, '/') : rtrim($this->siteUrl, '/') . '/admin';
+    }
+
+    /**
+     * A dashboard page to send the browser to ("login?error=…"): "/admin/login?error=…" on this same domain, or
+     * "https://admin.example.com/login?error=…" when the sites have their own domains.
+     */
+    public function adminPage(string $path = ''): string
+    {
+        $path = ltrim($path, '/');
+
+        return $this->separateDomains
+            ? $this->adminBase() . '/' . $path
+            : '/admin' . ($path === '' ? '' : '/' . $path);
+    }
+
+    /** A page of the public website to send the browser to ("/account"): on this domain, or on siteUrl. */
+    public function websitePage(string $path): string
+    {
+        return $this->separateDomains ? rtrim($this->siteUrl, '/') . '/' . ltrim($path, '/') : $path;
+    }
+
+    /**
+     * Browser origins ("https://example.com", no path) allowed to call the API with cookies. Empty unless
+     * separateDomains is on.
+     *
+     * @return list<string>
+     */
+    public function allowedOrigins(): array
+    {
+        if (! $this->separateDomains) {
+            return [];
+        }
+        $origin = static function (string $url): ?string {
+            $parts = parse_url(trim($url));
+
+            return isset($parts['scheme'], $parts['host'])
+                ? strtolower($parts['scheme'] . '://' . $parts['host']) . (isset($parts['port']) ? ':' . $parts['port'] : '')
+                : null;
+        };
+        $origins = [];
+        if (($site = $origin($this->siteUrl)) !== null) {
+            // example.com and www.example.com are both the website.
+            $origins[] = $site;
+            $origins[] = str_contains($site, '://www.') ? str_replace('://www.', '://', $site) : str_replace('://', '://www.', $site);
+        }
+        foreach (array_merge([$this->adminBase()], explode(',', $this->corsOrigins)) as $url) {
+            if (($o = $origin($url)) !== null) {
+                $origins[] = $o;
+            }
+        }
+
+        return array_values(array_unique($origins));
     }
 
     public function googleConfigured(): bool

@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { del, formatDate, patch, rupees } from '../api.js';
 import { useFlash, useLoad, useSession } from '../session.jsx';
 import { Loading } from '../components/Layout.jsx';
+import { API_URL } from '../urls.js';
 
 const STATUSES = { new: 'New', contacted: 'Contacted', done: 'Delivered', cancelled: 'Cancelled' };
 
@@ -42,7 +43,7 @@ export default function Orders() {
       <div className="page-head">
         <h1>Orders {data && <small className="muted">{data.total}</small>}</h1>
         {/* A normal download link: the session cookie is sent along. */}
-        <a className="btn ghost" href={`/api/admin/orders/export?status=${status}`}>Download CSV</a>
+        <a className="btn ghost" href={`${API_URL}/api/admin/orders/export?status=${status}`}>Download CSV</a>
       </div>
 
       <div className="tabs">

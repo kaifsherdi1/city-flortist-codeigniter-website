@@ -123,7 +123,7 @@ class Account extends ApiController
     {
         $google = service('googleOAuth');
         if (! $google->configured()) {
-            return $this->redirectTo('/login?error=' . rawurlencode('Google sign-in is not set up on this website yet.'));
+            return $this->redirectTo($this->websitePage('/login?error=' . rawurlencode('Google sign-in is not set up on this website yet.')));
         }
 
         return $this->redirectTo($google->redirectUrl($google->customerCallbackUrl()));
@@ -134,7 +134,7 @@ class Account extends ApiController
     {
         $oauth = service('googleOAuth');
         if (! $oauth->configured()) {
-            return $this->redirectTo('/login');
+            return $this->redirectTo($this->websitePage('/login'));
         }
 
         try {
@@ -144,12 +144,12 @@ class Account extends ApiController
             // thrown); {file} and {line} would be replaced by this line instead.
             log_message('error', '{class}: {exception}', ['class' => $e::class, 'exception' => $e]);
 
-            return $this->redirectTo('/login?error=' . rawurlencode('Google sign-in was cancelled or failed. Please try again.'));
+            return $this->redirectTo($this->websitePage('/login?error=' . rawurlencode('Google sign-in was cancelled or failed. Please try again.')));
         }
         $verified = (bool) ($google['email_verified'] ?? false);
         $email    = mb_strtolower((string) ($google['email'] ?? ''), 'UTF-8');
         if (! $verified || $email === '') {
-            return $this->redirectTo('/login?error=' . rawurlencode('Your Google account has no verified email address.'));
+            return $this->redirectTo($this->websitePage('/login?error=' . rawurlencode('Your Google account has no verified email address.')));
         }
 
         $model    = new CustomerModel();
@@ -179,7 +179,7 @@ class Account extends ApiController
         }
         $this->signIn($customer, true);
 
-        return $this->redirectTo('/account');
+        return $this->redirectTo($this->websitePage('/account'));
     }
 
     /**

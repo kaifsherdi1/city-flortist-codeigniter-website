@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountRequest, useAccount } from '../lib/account.jsx';
+import { API_URL } from '../lib/urls.js';
 import { usePageMeta } from '../lib/seo.js';
 import PasswordField, { GoogleG } from '../components/PasswordField.jsx';
 
@@ -14,7 +15,7 @@ const RULES = {
 
 function GoogleButton({ enabled, label }) {
   return enabled ? (
-    <a className="btn btn-google" href="/api/account/oauth/google" data-cursor="Google">
+    <a className="btn btn-google" href={API_URL + '/api/account/oauth/google'} data-cursor="Google">
       <GoogleG /> {label}
     </a>
   ) : (

@@ -3,6 +3,7 @@
 namespace Config;
 
 use App\Filters\AdminAuth;
+use App\Filters\ApiCors;
 use App\Filters\ApiThrottle;
 use App\Filters\CustomerAuth;
 use App\Filters\PostSize;
@@ -51,6 +52,7 @@ class Filters extends BaseFilters
         'session'         => SessionCsrf::class,
         'admin'           => AdminAuth::class,
         'customer'        => CustomerAuth::class,
+        'apicors'         => ApiCors::class,
     ];
 
     /**
@@ -63,6 +65,7 @@ class Filters extends BaseFilters
         'before' => [
             'forcehttps', // Force Global Secure Requests
             'pagecache',  // Web Page Caching
+            'apicors',    // answers CORS preflights when the sites have their own domains (App\Filters\ApiCors)
         ],
         'after' => [
             'pagecache',       // Web Page Caching

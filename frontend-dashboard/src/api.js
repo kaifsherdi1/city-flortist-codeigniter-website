@@ -1,3 +1,4 @@
+import { API_CREDENTIALS, API_URL } from './urls.js';
 // Client for the CodeIgniter dashboard API (/api/admin/...). Login is a session cookie; every change
 // sends the server's CSRF token back in the X-XSRF-TOKEN header, read from the XSRF-TOKEN cookie.
 
@@ -29,7 +30,7 @@ async function send(path, { method = 'GET', body, form } = {}) {
 
   let res;
   try {
-    res = await fetch('/api/admin/' + path, { method, headers, body: payload, credentials: 'same-origin' });
+    res = await fetch(API_URL + '/api/admin/' + path, { method, headers, body: payload, credentials: API_CREDENTIALS });
   } catch {
     throw failure('Cannot reach the shop server. Check the internet connection and try again.');
   }

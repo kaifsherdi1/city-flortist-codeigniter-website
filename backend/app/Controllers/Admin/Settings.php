@@ -241,7 +241,7 @@ class Settings extends ApiController
             'slug'    => $c['slug'],
             'tagline' => $c['tagline'] ?? '',
             'sort'    => (int) $c['sort'],
-            'cover'   => $c['cover_image'] ? '/' . $c['cover_image'] : null,
+            'cover'   => Text::publicPath($c['cover_image']),
         ], $rows);
     }
 

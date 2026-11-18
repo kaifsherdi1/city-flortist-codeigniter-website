@@ -62,10 +62,19 @@ class Text
         return rtrim(config(Florist::class)->siteUrl, '/') . '/' . ltrim($path, '/');
     }
 
-    /** "uploads/x.webp" → "/uploads/x.webp" (paths are stored relative to public/). */
+    /**
+     * "uploads/x.webp" → "/uploads/x.webp" (paths are stored relative to public/). When the website and dashboard
+     * have their own domains (florist.separateDomains) the photos stay on this backend's domain, so the URL is
+     * absolute: "https://api.example.com/uploads/x.webp".
+     */
     public static function publicPath(?string $path): ?string
     {
-        return $path ? '/' . ltrim($path, '/') : null;
+        if (! $path) {
+            return null;
+        }
+        $base = config(Florist::class)->separateDomains ? rtrim(config('App')->baseURL, '/') : '';
+
+        return $base . '/' . ltrim($path, '/');
     }
 
     /** "uploads/x.webp" → the file on disk, under the web root (Config\Florist::$publicPath). */

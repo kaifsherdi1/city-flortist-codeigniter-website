@@ -3,6 +3,7 @@
 namespace App\Libraries;
 
 use App\Models\AdminModel;
+use Config\Florist;
 
 /**
  * "Forgot password?" for the dashboard, as Laravel's password broker does it (same `password_reset_tokens` table):
@@ -50,7 +51,7 @@ class PasswordReset
     /** The dashboard's own reset page. */
     public static function url(string $token, string $email): string
     {
-        return Text::siteUrl('admin/reset-password') . '?' . http_build_query(['token' => $token, 'email' => $email]);
+        return config(Florist::class)->adminBase() . '/reset-password?' . http_build_query(['token' => $token, 'email' => $email]);
     }
 
     /**

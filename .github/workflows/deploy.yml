@@ -4,13 +4,14 @@ name: Deploy to Hostinger
 # backend's dependencies and uploads everything to Hostinger over FTP. Only changed files are uploaded.
 # .env, public/uploads/ (product photos) and the logs, sessions and cache in writable/ on the server are never touched.
 #
-# Server layout (public_html/):
-#   .htaccess           sends every request into public/
-#   app/ vendor/ writable/ spark …   CodeIgniter (backend/)
-#   public/index.php    CodeIgniter, answers /api/*
-#   public/index.html   the website (frontend-user), with public/assets/
-#   public/admin.html   the owner dashboard (frontend-dashboard), served at /admin, with public/admin-assets/
-#   public/uploads/     product photos (created by the dashboard, never overwritten)
+# Server layout (three folders, three addresses):
+#   public_html/          https://cityfloristhubli.com        the website (frontend-user build)
+#   public_html/admin/    https://admin.cityfloristhubli.com  the dashboard (frontend-dashboard build)
+#   public_html/api/      https://api.cityfloristhubli.com    CodeIgniter (backend/): .htaccess sends every request
+#                                                             into public/; .env lives here; public/uploads/ = photos
+#
+# Secrets: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, and optionally FTP_SERVER_DIR (the public_html folder as the
+# FTP account sees it, with a trailing slash; default "public_html/").
 
 on:
   push:
@@ -90,36 +91,40 @@ jobs:
           rm .env
           composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
-      - name: Assemble site folder
+      - name: Assemble the three folders
         run: |
-          mkdir -p deploy
-          cp -r backend/. deploy/
-          rm -rf deploy/tests deploy/build deploy/.env deploy/phpunit.xml deploy/phpunit.xml.dist deploy/.phpunit.result.cache deploy/public/uploads/*
-          mv deploy/deploy/.htaccess deploy/.htaccess && rm -rf deploy/deploy
+          mkdir -p deploy/public_html deploy/admin deploy/api
+          # Website → public_html/, dashboard → public_html/admin/ (each with its own .htaccess from public/)
+          cp -r frontend-user/dist/. deploy/public_html/
+          cp -r frontend-dashboard/dist/. deploy/admin/
+          # Backend → public_html/api/
+          cp -r backend/. deploy/api/
+          cd deploy/api
+          rm -rf tests build .env phpunit.xml phpunit.xml.dist .phpunit.result.cache public/uploads/*
+          mv deploy/.htaccess .htaccess && rm -rf deploy
           # Empty runtime folders still have to exist on the server: CodeIgniter writes its cache, logs and
           # sessions there (and won't create writable/cache itself). Each keeps its index.html and a .keep file.
           for d in cache debugbar logs session uploads; do
-            mkdir -p "deploy/writable/$d"
-            find "deploy/writable/$d" -mindepth 1 -maxdepth 1 ! -name index.html -exec rm -rf {} +
-            touch "deploy/writable/$d/.keep"
+            mkdir -p "writable/$d"
+            find "writable/$d" -mindepth 1 -maxdepth 1 ! -name index.html -exec rm -rf {} +
+            touch "writable/$d/.keep"
           done
-          mkdir -p deploy/public/uploads && touch deploy/public/uploads/.keep
-          cp -r frontend-user/dist/. deploy/public/
-          cp -r frontend-dashboard/dist/. deploy/public/
-          find deploy -maxdepth 2 -not -path 'deploy/vendor/*' | sort
+          mkdir -p public/uploads && touch public/uploads/.keep
+          cd ../..
+          find deploy -maxdepth 2 -not -path 'deploy/api/vendor/*' | sort
 
-      - name: Upload to Hostinger
+      # The action only ever deletes files it uploaded itself (it keeps a .ftp-deploy-sync-state.json in each
+      # folder), so the website upload never touches admin/ or api/, and files the server creates are safe.
+      - name: Upload the API (api.cityfloristhubli.com)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}
-          local-dir: ./deploy/
-          # The action only ever deletes files it uploaded, so files the server creates itself are safe anyway;
-          # the writable/ lines below (logs, sessions, rate-limit counters, debug toolbar) are belt and braces.
-          # The writable/ folders themselves are deliberately not excluded, so their index.html and .keep
-          # placeholders create the folders CodeIgniter needs.
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}api/
+          local-dir: ./deploy/api/
+          # writable/ lines (logs, sessions, rate-limit counters, debug toolbar) are belt and braces. The writable/
+          # folders themselves are deliberately not excluded, so their placeholders create the folders.
           exclude: |
             **/.git*
             **/.git*/**
@@ -129,3 +134,26 @@ jobs:
             writable/debugbar/debugbar_*
             writable/logs/log-*
             writable/session/city_florist_session*
+
+      - name: Upload the dashboard (admin.cityfloristhubli.com)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}admin/
+          local-dir: ./deploy/admin/
+
+      - name: Upload the website (cityfloristhubli.com)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}
+          local-dir: ./deploy/public_html/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            admin/**
+            api/**

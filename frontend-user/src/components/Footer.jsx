@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react';
 import { gsap, isTouch, reducedMotion } from '../lib/motion.js';
 import { directionsUrl, useSite } from '../lib/site.jsx';
 import { waLink } from '../lib/api.js';
+import { ADMIN_URL } from '../lib/urls.js';
 import Magnetic from './Magnetic.jsx';
 import { WhatsAppIcon } from './OrderModal.jsx';
 
@@ -185,8 +186,8 @@ export default function Footer() {
         <nav className="footer-legal" aria-label="Policies">
           <Link to="/privacy">Privacy Policy</Link>
           <Link to="/terms">Delivery & Refunds</Link>
-          {/* Plain <a>: the dashboard is its own app (admin.html), not a route of this site. */}
-          <a href="/admin" rel="nofollow">Staff login</a>
+          {/* Plain <a>: the dashboard is its own app (admin.cityfloristhubli.com), not a route of this site. */}
+          <a href={ADMIN_URL} rel="nofollow">Staff login</a>
         </nav>
       </div>
     </footer>

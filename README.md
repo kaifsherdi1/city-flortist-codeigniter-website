@@ -5,10 +5,10 @@ Website and shop-owner dashboard for City Florist: flower bouquets, chocolate bo
 | Folder | What it is | Tech |
 | --- | --- | --- |
 | `frontend-user/` | Public website: 3D hero, scroll animations, shop, product pages, Buy → WhatsApp, customer accounts | React 19, Vite, Three.js (React Three Fiber), GSAP + ScrollTrigger, Lenis |
-| `frontend-dashboard/` | Owner dashboard at `/admin`: products, photos, prices, daily offers, orders, reviews, settings | React 19 (mobile friendly), Vite |
+| `frontend-dashboard/` | Owner dashboard (`admin.cityfloristhubli.com`; `/admin` in development): products, photos, prices, daily offers, orders, reviews, settings | React 19 (mobile friendly), Vite |
 | `backend/` | CodeIgniter app: public API (`/api`), dashboard API (`/api/admin`), customer accounts (`/api/account`), database migrations, seed photos, image processing | CodeIgniter 4.7, PHP 8.2+ (`intl`, `gd`, `mysqli`, `mbstring`), MySQL / MariaDB |
 
-Three separate apps. Each React app has its own `package.json` and Vite build: `frontend-user` builds to `dist/index.html` + `dist/assets/`, `frontend-dashboard` to `dist/admin.html` + `dist/admin-assets/`. The deploy copies both into `backend/public/`, so the website, the dashboard (`/admin`) and the API (`/api`) are served from one domain and share the login cookies.
+Three separate apps. Each React app has its own `package.json` and Vite build (`dist/index.html` + assets). On the live site each has its own address: the website on `cityfloristhubli.com`, the dashboard on `admin.cityfloristhubli.com` and the API on `api.cityfloristhubli.com`, sharing the login cookies through `cookie.domain = .cityfloristhubli.com`. In development the Vite servers pass `/api` and `/admin` through, so everything opens on `localhost:5173`.
 
 The backend was first written in Laravel. This CodeIgniter version answers every URL the same way (same JSON, same messages, same database tables), so the two React apps didn't change. See [Moving from the Laravel version](#moving-from-the-laravel-version).
 
@@ -50,7 +50,7 @@ npm install
 npm run dev                     # → http://localhost:5174/admin
 ```
 
-There is no separate `php spark migrate` step: `florist:install` runs the migrations itself. Keep `--host 127.0.0.1 --port 8000` on `php spark serve` (on its own it uses port 8080): both Vite servers forward `/api` and `/uploads` to the backend at 127.0.0.1:8000, and the website's server also passes `/admin` to the dashboard, so **http://localhost:5173/admin** opens the dashboard too, just like on the live site. Instead of `florist:install` you can open `/admin` and press **Install**.
+There is no separate `php spark migrate` step: `florist:install` runs the migrations itself. Keep `--host 127.0.0.1 --port 8000` on `php spark serve` (on its own it uses port 8080): both Vite servers forward `/api` and `/uploads` to the backend at 127.0.0.1:8000, and the website's server also passes `/admin` to the dashboard, so **http://localhost:5173/admin** opens the dashboard too (on the live site it has its own address, admin.cityfloristhubli.com). Instead of `florist:install` you can open `/admin` and press **Install**.
 
 Default local admin login: `admin` / `ChangeMe@123` (from `florist.adminUsername` / `florist.adminPassword` in `.env`). The first login with it asks for a new password before the dashboard opens.
 
@@ -67,33 +67,17 @@ Backend tests: `cd backend && composer test` (they use the `cityflorist_ci_test`
 | `/api/account/*` | Customer accounts on the website: register, log in, order history |
 | `/api/admin/*` | Dashboard: session login with a CSRF token from the `XSRF-TOKEN` cookie (see [backend/app/Config/Routes.php](backend/app/Config/Routes.php)) |
 
-## Hosting on Hostinger (auto-deploy from GitHub)
+## Hosting on Hostinger
 
-This works on any Hostinger web hosting plan (Premium, Business or Cloud). Every push to `main` runs the backend tests, builds both React apps, installs CodeIgniter's dependencies and uploads everything over FTP with GitHub Actions ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)). The whole CodeIgniter app goes into `public_html/`. A `.htaccess` there sends every request into the app's `public/` folder, so `.env`, `app/`, `vendor/` and `writable/` are never reachable from the web.
+The live shop uses three addresses on one Hostinger plan:
 
-### One-time setup
+| Address | App | Folder |
+| --- | --- | --- |
+| `https://cityfloristhubli.com` | website (`frontend-user`) | `public_html/` |
+| `https://admin.cityfloristhubli.com` | dashboard (`frontend-dashboard`) | `public_html/admin/` |
+| `https://api.cityfloristhubli.com` | backend (`backend/`, CodeIgniter) | `public_html/api/` |
 
-1. **Use PHP 8.2 or newer.** hPanel → Advanced → PHP Configuration. Under PHP extensions, make sure `intl` is ticked (CodeIgniter won't start without it), along with `gd`, `mysqli` and `mbstring`.
-2. **Create the database.** hPanel → Databases → MySQL Databases: create a database and user, and note the name, username and password (they look like `u123456789_florist`).
-3. **Get the FTP details.** hPanel → Files → FTP Accounts: note the FTP host, username and password.
-4. **Add GitHub secrets.** In the repository: Settings → Secrets and variables → Actions → New repository secret:
-   - `FTP_SERVER`: the FTP host
-   - `FTP_USERNAME`: the FTP username
-   - `FTP_PASSWORD`: the FTP password
-   - `FTP_SERVER_DIR` (optional): the folder to deploy into. The default is `public_html/`. If your FTP account already opens inside `public_html`, set this to `./`.
-5. **Push to `main`.** The first upload includes CodeIgniter's `vendor/` folder (about 800 files), so it takes a few minutes; later deploys only send changed files. Watch it under the repository's **Actions** tab.
-6. **Create `.env` on the server.** In hPanel File Manager, open `public_html`, copy [`.env.production.example`](backend/.env.production.example) to `.env`, and fill in every `<…>` value:
-   - `encryption.key`: generate one on your computer with `cd backend && php spark key:generate --show`. Keep a private copy: two-step login secrets are encrypted with it. (Coming from the Laravel version? Use its key instead, see below.)
-   - `app.baseURL` (`https://yourdomain.com/`, with the slash) and `florist.siteUrl` (`https://yourdomain.com`)
-   - the MySQL details from step 2 (`database.default.*`)
-   - `florist.adminUsername` and a long `florist.adminPassword`. The installer refuses the example password and anything under 10 characters.
-   - the mail settings (`florist.mailer = smtp` and the `email.*` lines; keep `email.SMTPCrypto = ssl` for port 465), so "Forgot password?" can send reset emails
-7. **Enable SSL** for the domain (hPanel → Security → SSL) before installing, so the first login is already encrypted.
-8. **Install.** Visit `https://yourdomain.com/admin` and press **Install**. This creates the tables, the admin login and the starter products. It locks itself afterwards.
-9. **First login.** You're asked to choose a new password straight away. Then, in **Settings**: set the WhatsApp number, phone, address, hours and Google Maps link; save the owner's email and mobile in **Login details**; and turn on **Two-step login**.
-10. **Run through the [launch checklist](#launch-checklist).**
-
-From then on, every `git push` to `main` updates the live site. Product photos (`public/uploads/`), `.env`, and the sessions, logs and cache in `writable/` on the server are never overwritten. Database changes in new versions are applied automatically the next time the dashboard is opened, so no SSH is needed.
+`bash scripts/package-hostinger.sh` builds a zip for each folder. Alternatively, [.github/workflows/deploy.yml](.github/workflows/deploy.yml) tests, builds and uploads all three over FTP on every push to `main`. The backend's `.env` (from [`backend/.env.production.example`](backend/.env.production.example)) turns on `florist.separateDomains` (CORS for the two sites, absolute photo URLs) and shares the login cookies with `cookie.domain = .cityfloristhubli.com`. The frontends read their addresses from `.env.production`.
 
 ### Moving from the Laravel version
 
@@ -101,7 +85,7 @@ This backend replaces the Laravel one without touching the data:
 
 - **The same database works unchanged.** The tables are the same, so point `database.default.*` at the Laravel site's database. CodeIgniter keeps its own migration history in a new `ci_migrations` table: its migrations find every table and column already there and adopt them as they are, and Laravel's `migrations` table is left alone.
 - **Use the Laravel key:** set `encryption.key = base64:…` to the Laravel `APP_KEY`, copied whole, `base64:` included. Two-step login secrets and backup codes were encrypted with it, so they keep working. With a new key, two-step login would have to be turned off (`php spark florist:admin-recover <username> --two-factor-off`) and set up again.
-- **Photos:** they live in `public/uploads/` in both versions. On Hostinger they stay where they are (`public_html/public/uploads/`; deploys never touch that folder). Locally, copy the Laravel project's `backend/public/uploads/` into this `backend/public/`.
+- **Photos:** they live in `public/uploads/` in both versions. On Hostinger they stay where they are (`public_html/api/public/uploads/`; deploys never touch that folder). Locally, copy the Laravel project's `backend/public/uploads/` into this `backend/public/`.
 - **Everyone logs in again once.** Sessions and "remember me" cookies are CodeIgniter's own now. Passwords, accounts, orders and settings are unchanged.
 - **`.env` has new names** for the same settings (see [`.env.production.example`](backend/.env.production.example)):
 
@@ -122,8 +106,8 @@ This backend replaces the Laravel one without touching the data:
 On a live Hostinger site:
 
 1. Make the new `.env` on your computer from `.env.production.example`, with the values from the Laravel `.env` (table above).
-2. Push this version to `main`. As soon as the upload finishes, replace `public_html/.env` with the new one: until then the site runs CodeIgniter with the Laravel settings, which it can't read.
-3. Open `/admin` and log in. Nothing needs installing.
+2. Push this version to `main`. As soon as the upload finishes, replace `public_html/api/.env` with the new one: until then the site runs CodeIgniter with the Laravel settings, which it can't read.
+3. Open `https://admin.cityfloristhubli.com` and log in. Nothing needs installing.
 4. If the Laravel version deployed to the same folder, this deploy deletes the Laravel files and folders that deploy had uploaded (`bootstrap/`, `config/`, `database/`, `routes/`, `storage/`, `artisan` …). Delete anything else left over in File Manager; none of it is reachable from the web.
 
 ### Moving a live site from the old PHP version
@@ -131,13 +115,13 @@ On a live Hostinger site:
 If the site was still running the PHP version from before Laravel, the next deploy replaces it. The data carries over:
 
 1. Create `.env` as in step 6, using the database details from the old `config.php`.
-2. In File Manager, move the old `public_html/uploads/products` (and `offers`, `categories`, if they exist) into `public_html/public/uploads/`.
-3. Open `/admin` and log in with the existing username and password. The existing tables, products, orders and settings are adopted as they are; nothing needs reinstalling.
+2. In File Manager, move the old `public_html/uploads/products` (and `offers`, `categories`, if they exist) into `public_html/api/public/uploads/`.
+3. Open `https://admin.cityfloristhubli.com` and log in with the existing username and password. The existing tables, products, orders and settings are adopted as they are; nothing needs reinstalling.
 4. Delete the old `config.php`, `includes/`, `api/` and `admin/` folders if they are still there (they're no longer reachable, but there's no reason to keep them).
 
 ### Hostinger notes
-- The `.htaccess` forces HTTPS, so SSL must be enabled for the domain.
-- If something fails, read `public_html/writable/logs/log-<date>.log` first. Only set `florist.debug = true` in `.env` for a minute if you must, because API errors then show their details (file paths, database errors) to every visitor, and remove it straight away. Never change `CI_ENVIRONMENT` from `production` on the live site.
+- The `.htaccess` files force HTTPS, so SSL must be enabled for the domain and both subdomains.
+- If something fails, read `public_html/api/writable/logs/log-<date>.log` first. Only set `florist.debug = true` in `.env` for a minute if you must, because API errors then show their details (file paths, database errors) to every visitor, and remove it straight away. Never change `CI_ENVIRONMENT` from `production` on the live site.
 - CodeIgniter writes one log file a day and never deletes them; clear out old ones in `writable/logs/` now and then.
 
 ### Launch checklist
@@ -146,7 +130,7 @@ Before handing over, on the live site:
 
 - [ ] `https://` works and `http://` redirects to it
 - [ ] `.env` has `CI_ENVIRONMENT = production` and a real `encryption.key`, and a copy of the key is kept somewhere safe
-- [ ] `https://yourdomain.com/.env`, `/writable/logs/` and `/vendor/` never show those files (you get the website's "page not found", or a 403/404)
+- [ ] `https://api.cityfloristhubli.com/.env`, `/writable/logs/` and `/vendor/` never show those files (you are redirected to the website, or get a 403/404)
 - [ ] Logged in, chose a new password, turned on two-step login, and saved the backup codes
 - [ ] Owner's email and mobile saved in **Settings → Login details**; "Forgot password?" sends an email
 - [ ] WhatsApp number in **Settings** is the owner's real one; a test order arrives on that phone

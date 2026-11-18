@@ -2,6 +2,7 @@
 // so it can't fail to load separately.
 import siteSnapshot from '../catalog/site.json';
 import productsSnapshot from '../catalog/products.json';
+import { API_URL } from './urls.js';
 
 async function request(url, options = {}) {
   let res;
@@ -39,10 +40,14 @@ export const productsNow = () => productsSnapshot.products;
 
 /**
  * True when live API data says the same as the snapshot. The snapshot serves photos from /catalog/
- * (copies of /uploads/), so paths are compared as if they were the same folder.
+ * (copies of /uploads/), so paths are compared as if they were the same folder. With the API on its own
+ * subdomain, live photo URLs are absolute (https://api.cityfloristhubli.com/uploads/…).
  */
-export const sameAsSnapshot = (live, snap) =>
-  JSON.stringify(live).replaceAll('"/uploads/', '"/catalog/') === JSON.stringify(snap);
+export const sameAsSnapshot = (live, snap) => {
+  let text = JSON.stringify(live);
+  if (API_URL) text = text.replaceAll(`"${API_URL}/uploads/`, '"/uploads/');
+  return text.replaceAll('"/uploads/', '"/catalog/') === JSON.stringify(snap);
+};
 
 export const isStaticOnly = () => STATIC_ONLY;
 
@@ -61,7 +66,7 @@ const withSnapshot = (live, fallback) =>
 export const api = {
   site: () =>
     withSnapshot(
-      () => request('/api/site'),
+      () => request(API_URL + '/api/site'),
       async () => {
         const site = await snapshot('site');
         return { ...site, offers: site.offers.filter((o) => new Date(o.ends_at) > new Date()) };
@@ -69,7 +74,7 @@ export const api = {
     ),
   products: (cat) =>
     withSnapshot(
-      () => request('/api/products' + (cat ? `?cat=${encodeURIComponent(cat)}` : '')),
+      () => request(API_URL + '/api/products' + (cat ? `?cat=${encodeURIComponent(cat)}` : '')),
       async () => {
         const data = await snapshot('products');
         return cat ? { ...data, products: data.products.filter((p) => p.category.slug === cat) } : data;
@@ -77,7 +82,7 @@ export const api = {
     ),
   product: (slug) =>
     withSnapshot(
-      () => request(`/api/products?slug=${encodeURIComponent(slug)}`),
+      () => request(`${API_URL}/api/products?slug=${encodeURIComponent(slug)}`),
       async () => {
         const { products } = await snapshot('products');
         const product = products.find((p) => p.slug === slug);
@@ -90,9 +95,9 @@ export const api = {
       }
     ),
   order: (payload) =>
-    STATIC_ONLY ? Promise.reject(offline()) : request('/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
+    STATIC_ONLY ? Promise.reject(offline()) : request(API_URL + '/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
   review: (payload) =>
-    STATIC_ONLY ? Promise.reject(offline()) : request('/api/reviews', { method: 'POST', body: JSON.stringify(payload) }),
+    STATIC_ONLY ? Promise.reject(offline()) : request(API_URL + '/api/reviews', { method: 'POST', body: JSON.stringify(payload) }),
 };
 
 export const rupees = (n) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');

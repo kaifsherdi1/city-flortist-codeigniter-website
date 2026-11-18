@@ -5,6 +5,7 @@ import { useSession } from '../session.jsx';
 import { Screen } from '../components/Layout.jsx';
 import Icon from '../components/Icon.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
+import { API_URL } from '../urls.js';
 
 // All three go to the same `login` field; the server works out which one it is.
 const METHODS = {
@@ -165,7 +166,7 @@ function LoginForm({ initialError, notice, onForgot }) {
 
       <div className="or"><span>or</span></div>
       {loginOptions.google ? (
-        <a className="btn ghost google" href="/api/admin/oauth/google"><GoogleG /> Continue with Google</a>
+        <a className="btn ghost google" href={API_URL + "/api/admin/oauth/google"}><GoogleG /> Continue with Google</a>
       ) : (
         <>
           <button type="button" className="btn ghost google" disabled title="Google sign-in isn't set up on this server yet"><GoogleG /> Continue with Google</button>
@@ -274,7 +275,7 @@ export function StaffRegister() {
             <button className="btn" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create staff account'}</button>
             <div className="or"><span>or</span></div>
             {loginOptions.google ? (
-              <a className="btn ghost google" href="/api/admin/oauth/google?intent=register"><GoogleG /> Sign up with Google</a>
+              <a className="btn ghost google" href={API_URL + "/api/admin/oauth/google?intent=register"}><GoogleG /> Sign up with Google</a>
             ) : (
               <button type="button" className="btn ghost google" disabled title="Google sign-in isn't set up on this server yet"><GoogleG /> Sign up with Google</button>
             )}

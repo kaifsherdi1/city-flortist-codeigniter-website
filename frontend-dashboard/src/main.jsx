@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { FlashProvider, SessionProvider } from './session.jsx';
 import { applyTheme } from './prefs.js';
+import { ADMIN_BASE } from './urls.js';
 import './admin.css';
 import './extras.css';
 
@@ -11,7 +12,7 @@ applyTheme(); // before the first paint, so a dark-mode user never sees a white 
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter basename="/admin">
+    <BrowserRouter basename={ADMIN_BASE}>
       <FlashProvider>
         <SessionProvider>
           <App />

@@ -27,6 +27,14 @@ class Web extends Controller
     /** GET /admin and /admin/… : the owner dashboard (frontend-dashboard → public/admin.html). */
     public function admin(): ResponseInterface
     {
+        $florist = config(Florist::class);
+        if ($florist->separateDomains) {
+            // The dashboard lives on its own subdomain: /admin/orders → https://admin.example.com/orders
+            $rest = preg_replace('#^admin/?#', '', trim($this->request->getPath(), '/'));
+
+            return Http::redirect($florist->adminPage((string) $rest));
+        }
+
         return $this->page('admin.html');
     }
 
@@ -114,7 +122,12 @@ class Web extends Controller
 
     private function page(string $file): ResponseInterface
     {
-        $path = rtrim(config(Florist::class)->publicPath, '/\\') . DIRECTORY_SEPARATOR . $file;
+        $florist = config(Florist::class);
+        if ($florist->separateDomains) {
+            // This domain only answers the API (api.example.com); the website is on florist.siteUrl.
+            return Http::redirect($florist->websitePage('/' . ltrim($this->request->getPath(), '/')));
+        }
+        $path = rtrim($florist->publicPath, '/\\') . DIRECTORY_SEPARATOR . $file;
         if (! is_file($path)) {
             return Http::cacheControl($this->response, Http::NO_CACHE)
                 ->setStatusCode(404)

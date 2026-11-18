@@ -8,3 +8,7 @@ npm.log
 vite.log
 .DS_Store
 Thumbs.db
+
+# Deployment and owner guides: kept locally, not in the repository
+/DEPLOYMENT.md
+/OWNER-GUIDE.md

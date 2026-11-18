@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isStaticOnly } from './api.js';
+import { API_CREDENTIALS, API_URL } from './urls.js';
 
 // Customer accounts: /api/account/* (session cookie + the server's CSRF token, like the dashboard, but a separate
 // login: a customer account never opens the dashboard).
@@ -18,7 +19,7 @@ async function send(path, { method = 'GET', body } = {}) {
   }
   let res;
   try {
-    res = await fetch('/api/account/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined, credentials: 'same-origin' });
+    res = await fetch(API_URL + '/api/account/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined, credentials: API_CREDENTIALS });
   } catch {
     throw Object.assign(new Error('Can’t reach the shop server. Check your internet connection and try again.'), { offline: true });
   }

@@ -5,6 +5,7 @@ import { useFlash, useSession } from '../session.jsx';
 import { usePrefs } from '../prefs.js';
 import Icon, { BrandMark } from './Icon.jsx';
 import { FloristArt, OwnerArt } from './AuthArt.jsx';
+import { SITE_URL } from '../urls.js';
 
 /** Sidebar: a plain link, or a group with sub-links. `match` decides which group is "current". */
 const NAV = [
@@ -184,8 +185,8 @@ export default function Layout() {
             )
           )}
           <div className="section">Website</div>
-          <a href="/" target="_blank" rel="noreferrer" title="View site"><Icon name="external" /> <span className="label">View site</span></a>
-          <a href="/shop" target="_blank" rel="noreferrer" title="Shop page"><Icon name="cart" /> <span className="label">Shop page</span></a>
+          <a href={SITE_URL + "/"} target="_blank" rel="noreferrer" title="View site"><Icon name="external" /> <span className="label">View site</span></a>
+          <a href={SITE_URL + "/shop"} target="_blank" rel="noreferrer" title="Shop page"><Icon name="cart" /> <span className="label">Shop page</span></a>
         </nav>
 
         <div className="side-foot">
@@ -270,7 +271,7 @@ export default function Layout() {
       {/* Bottom left: help and the shop. */}
       <div className="fab-left">
         <button type="button" className="help" onClick={() => setPanel('help')} title="Help" aria-label="Help"><Icon name="headset" size={24} /></button>
-        <a className="shop" href="/shop" target="_blank" rel="noreferrer" title="Open the shop" aria-label="Open the shop"><Icon name="cart" size={24} /></a>
+        <a className="shop" href={SITE_URL + "/shop"} target="_blank" rel="noreferrer" title="Open the shop" aria-label="Open the shop"><Icon name="cart" size={24} /></a>
       </div>
 
       {scrolled && (

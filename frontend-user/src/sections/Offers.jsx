@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap, ScrollTrigger } from '../lib/motion.js';
+import { gsap, isPhoneLike, ScrollTrigger, useLazyGSAP } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 
 const DEFAULT_TICKER = ['Flower Bouquets', 'Chocolate Bouquets', 'Wedding Car Décor', 'Wedding-Night Rooms', 'Bridal Garlands', 'Teddy Bears', 'Cakes', 'Made fresh in Hubballi'];
@@ -14,8 +13,9 @@ export default function Offers() {
     ? offers.flatMap((o) => [o.discount ? `${o.title} · ${o.discount}% off` : o.title, o.subtitle].filter(Boolean))
     : DEFAULT_TICKER;
 
-  useGSAP(
+  useLazyGSAP(
     () => {
+      const phone = isPhoneLike();
       const tracks = gsap.utils.toArray('.marquee-track');
       const loops = tracks.map((t, i) =>
         i % 2
@@ -28,7 +28,9 @@ export default function Offers() {
         end: 'bottom top',
         // The loops run forever, so only while the marquee is on screen (off screen they just burn CPU).
         onToggle: (self) => loops.forEach((l) => (self.isActive ? l.play() : l.pause())),
-        onUpdate: (self) => {
+        // Desktop only: the marquee speeds up and leans with the scroll. On phones this started new tweens on
+        // every scroll event, which a phone feels as stutter; there the marquee just runs.
+        onUpdate: phone ? undefined : (self) => {
           const v = gsap.utils.clamp(-1, 1, self.getVelocity() / 2500);
           loops.forEach((l) =>
             gsap.to(l, {

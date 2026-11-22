@@ -12,7 +12,7 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Laravel's `web` middleware for /api/admin and /api/account: starts the session and checks the CSRF token on every
+ * Laravel's `web` middleware for /api/admin: starts the session and checks the CSRF token on every
  * change. A wrong or missing token gets 419, which makes the React apps fetch a fresh token and try once more.
  */
 class SessionCsrf implements FilterInterface

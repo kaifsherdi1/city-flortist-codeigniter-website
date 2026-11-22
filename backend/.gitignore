@@ -39,7 +39,9 @@ Desktop.ini
 /public/assets
 /public/admin.html
 /public/admin-assets
-/public/favicon.svg
+/public/favicon.png
+/public/favicon-32.png
+/public/apple-touch-icon.png
 /public/robots.txt
 /public/img
 /public/catalog

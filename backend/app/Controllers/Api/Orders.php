@@ -3,6 +3,7 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\ApiController;
+use App\Controllers\Share;
 use App\Libraries\Catalog as Shop;
 use App\Libraries\Settings;
 use App\Libraries\Text;
@@ -10,7 +11,7 @@ use App\Models\OrderModel;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\HTTP\ResponseInterface;
 
-/** Orders placed on the public website: POST /api/orders (and POST /api/account/orders, see Account::order). */
+/** Orders placed on the public website: POST /api/orders. */
 class Orders extends ApiController
 {
     /**
@@ -19,17 +20,6 @@ class Orders extends ApiController
      * Price and product name always come from the database, never from the browser.
      */
     public function store(): ResponseInterface
-    {
-        return $this->place();
-    }
-
-    /**
-     * Places the order; with a customer (POST /api/account/orders) it is saved to their account too.
-     * Public so Account::order() can use it; no route points here (auto-routing is off).
-     *
-     * @param array<string, mixed>|null $customer The logged-in customer's row (service('customerAuth')->user())
-     */
-    public function place(?array $customer = null): ResponseInterface
     {
         // Honeypot: real visitors never fill this hidden field.
         if ($this->filled('website')) {
@@ -65,7 +55,6 @@ class Orders extends ApiController
         $limiter->hit($key, 30 * 60);
 
         $orderId = (int) (new OrderModel())->insert([
-            'customer_id'    => $customer === null ? null : (int) $customer['id'],
             'product_id'     => $product['id'],
             'product_name'   => $product['name'],
             'price_at_order' => $pricing['final'],
@@ -112,7 +101,10 @@ class Orders extends ApiController
         if ($note) {
             $lines[] = '*Note:* ' . $note;
         }
-        // No photo or page links: the owner asked for a short message with just the order details.
+        // The product link goes last: WhatsApp turns it into a preview with the product's photo (see Share), so
+        // the owner sees which bouquet the customer is asking about.
+        $lines[] = '';
+        $lines[] = '*Photo:* ' . Share::url($product['slug']);
 
         return implode("\n", $lines);
     }

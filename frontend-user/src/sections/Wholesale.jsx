@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap, ScrollTrigger, reducedMotion } from '../lib/motion.js';
+import { gsap, ScrollTrigger, reducedMotion, useLazyGSAP } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 import { waLink } from '../lib/api.js';
 import { useOrder, WhatsAppIcon } from '../components/OrderModal.jsx';
@@ -23,7 +22,7 @@ export default function Wholesale() {
   const n = wholesale.length;
 
   // Only transforms and opacity, each played once: nothing here re-paints while the page scrolls.
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (!n || reducedMotion()) return;
       gsap.from('.ws-head .wi', {

@@ -1,10 +1,8 @@
 import { Fragment, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap, isTouch, reducedMotion } from '../lib/motion.js';
+import { gsap, isTouch, reducedMotion, useLazyGSAP } from '../lib/motion.js';
 import { directionsUrl, useSite } from '../lib/site.jsx';
 import { waLink } from '../lib/api.js';
-import { ADMIN_URL } from '../lib/urls.js';
 import Magnetic from './Magnetic.jsx';
 import { WhatsAppIcon } from './OrderModal.jsx';
 
@@ -14,7 +12,7 @@ export default function Footer() {
   const { settings, categories } = useSite();
   const root = useRef(null);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (reducedMotion()) return;
       const mm = gsap.matchMedia();
@@ -182,13 +180,7 @@ export default function Footer() {
 
       <div className="footer-bar container">
         <span>© {new Date().getFullYear()} City Florist · Hubballi</span>
-        <span>All kinds of fresh flowers, bouquets & decorators</span>
-        <nav className="footer-legal" aria-label="Policies">
-          <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/terms">Delivery & Refunds</Link>
-          {/* Plain <a>: the dashboard is its own app (admin.cityfloristhubli.com), not a route of this site. */}
-          <a href={ADMIN_URL} rel="nofollow">Staff login</a>
-        </nav>
+        <span className="footer-credit">Designed by Zidaan Tech Studio</span>
       </div>
     </footer>
   );

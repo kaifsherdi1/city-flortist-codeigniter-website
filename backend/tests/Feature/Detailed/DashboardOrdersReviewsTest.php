@@ -536,7 +536,7 @@ final class DashboardOrdersReviewsTest extends FeatureTestCase
     // GET /api/admin/orders
     // ------------------------------------------------------------------------------------------------------
 
-    public function test_orders_are_paged_30_at_a_time_newest_first(): void
+    public function test_orders_are_paged_10_at_a_time_newest_first(): void
     {
         $statuses = ['new', 'contacted', 'done', 'cancelled'];
         for ($i = 1; $i <= 65; $i++) {
@@ -549,22 +549,22 @@ final class DashboardOrdersReviewsTest extends FeatureTestCase
         $this->assertSame(self::ORDERS_INDEX_KEYS, array_keys($this->json($res)));
         $this->assertSame(65, $this->json($res, 'total'));
         $this->assertSame(1, $this->json($res, 'page'));
-        $this->assertSame(3, $this->json($res, 'pages'));
-        $this->assertSame(range(65, 36), array_column($this->json($res, 'orders'), 'id'));
+        $this->assertSame(7, $this->json($res, 'pages'));
+        $this->assertSame(range(65, 56), array_column($this->json($res, 'orders'), 'id'));
         $this->assertSame(OrderModel::STATUSES, $this->json($res, 'statuses'));
         $this->assertSame(Settings::defaults()['google_review_link'], $this->json($res, 'review_link'));
         $this->assertSame(self::ORDER_KEYS, array_keys($this->json($res, 'orders.0')));
         $this->assertSame(self::wire(OrderModel::serialize($this->orderRow(65))), $this->json($res, 'orders.0'));
 
         $res = $this->getJson('/api/admin/orders?page=2');
-        $this->assertSame(range(35, 6), array_column($this->json($res, 'orders'), 'id'));
+        $this->assertSame(range(55, 46), array_column($this->json($res, 'orders'), 'id'));
         $this->assertSame(2, $this->json($res, 'page'));
-        $res = $this->getJson('/api/admin/orders?page=3');
+        $res = $this->getJson('/api/admin/orders?page=7');
         $this->assertSame(range(5, 1), array_column($this->json($res, 'orders'), 'id'));
 
         // Past the last page: Laravel's paginator keeps the page number and returns no orders.
-        $res = $this->getJson('/api/admin/orders?page=4');
-        $this->assertSame([[], 65, 4, 3], [$this->json($res, 'orders'), $this->json($res, 'total'), $this->json($res, 'page'), $this->json($res, 'pages')]);
+        $res = $this->getJson('/api/admin/orders?page=8');
+        $this->assertSame([[], 65, 8, 7], [$this->json($res, 'orders'), $this->json($res, 'total'), $this->json($res, 'page'), $this->json($res, 'pages')]);
 
         // Anything that isn't a whole number >= 1 is page 1 (FILTER_VALIDATE_INT: no leading zeros, no decimals).
         foreach (['0', '-1', 'abc', '2.5', '02', '1e1', '', '%20', 'page[]=2'] as $page) {
@@ -596,8 +596,8 @@ final class DashboardOrdersReviewsTest extends FeatureTestCase
         foreach (['bogus', 'Done', '', 'Delivered'] as $status) {
             $res = $this->getJson("/api/admin/orders?status={$status}");
             $this->assertSame(40, $this->json($res, 'total'), $status);
-            $this->assertSame(2, $this->json($res, 'pages'), $status);
-            $this->assertCount(30, $this->json($res, 'orders'));
+            $this->assertSame(4, $this->json($res, 'pages'), $status);
+            $this->assertCount(10, $this->json($res, 'orders'));
         }
         $this->assertSame(10, $this->json($this->getJson('/api/admin/orders?status=%20new%20'), 'total'), 'the status is trimmed');
     }

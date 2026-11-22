@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { Link } from 'react-router-dom';
 import { api, rupees, waLink } from '../lib/api.js';
 import { useSite } from '../lib/site.jsx';
-import { accountRequest, useAccount } from '../lib/account.jsx';
 import { gsap, lockScroll } from '../lib/motion.js';
 import Price from './Price.jsx';
 
@@ -30,12 +29,10 @@ export function OrderProvider({ children }) {
 
 function OrderModal({ product, onClose }) {
   const { settings } = useSite();
-  // Logged-in customers: details filled in, and the order is saved to their account (My account → My orders).
-  const { customer } = useAccount();
   const root = useRef(null);
   const [form, setForm] = useState({
-    name: saved().name || customer?.username || '',
-    phone: saved().phone || (customer?.phone ? customer.phone.replace(/^91/, '') : ''),
+    name: saved().name || '',
+    phone: saved().phone || '',
     delivery_date: '',
     note: '',
     website: '',
@@ -97,7 +94,7 @@ function OrderModal({ product, onClose }) {
     localStorage.setItem('cf_customer', JSON.stringify({ name: form.name.trim(), phone: form.phone }));
     try {
       const payload = { product_id: product.id, ...form };
-      const res = customer ? await accountRequest('orders', { method: 'POST', body: payload }) : await api.order(payload);
+      const res = await api.order(payload);
       go(res.whatsapp);
     } catch (err) {
       if (err.status && err.status < 500 && err.status !== 429) {
@@ -117,6 +114,8 @@ function OrderModal({ product, onClose }) {
         `*Phone:* ${form.phone}`,
         form.delivery_date ? `*Needed on:* ${form.delivery_date}` : null,
         form.note ? `*Note:* ${form.note}` : null,
+        '',
+        `*Photo:* ${window.location.origin}/product/${product.slug}`,
       ]
         .filter((l) => l !== null)
         .join('\n');

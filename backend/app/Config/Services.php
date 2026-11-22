@@ -7,7 +7,6 @@ use App\Libraries\GoogleOAuth;
 use App\Libraries\Mailer;
 use App\Libraries\RateLimiter;
 use App\Models\AdminModel;
-use App\Models\CustomerModel;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -33,16 +32,6 @@ class Services extends BaseService
         }
 
         return new Guard(new AdminModel(), 'admin', 'remember_admin', true);
-    }
-
-    /** Customer accounts on the website (table `customers`). Never opens the dashboard. */
-    public static function customerAuth(bool $getShared = true): Guard
-    {
-        if ($getShared) {
-            return static::getSharedInstance('customerAuth');
-        }
-
-        return new Guard(new CustomerModel(), 'customer', 'remember_customer', false);
     }
 
     /** "Continue with Google" (OAuth 2.0). */

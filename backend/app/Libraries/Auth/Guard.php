@@ -10,14 +10,14 @@ use Config\Cookie as CookieConfig;
 use Config\Florist;
 
 /**
- * One login (the dashboard's `admins`, or the website's `customers`), kept in the session, like Laravel's session
+ * The dashboard's login (`admins`), kept in the session, like Laravel's session
  * guard:
  *  - login() renews the session id (so a planted session id is useless) and can set a "remember me" cookie;
  *  - "remember me" is "<id>|<remember_token>|<signature>". A new remember_token (password change, logout, a staff
  *    account switched off) ends every remembered login, and the signature covers the password hash too;
  *  - with $trackPassword (the dashboard), a session ends as soon as the password is changed somewhere else
  *    (Laravel's auth.session).
- * Get the guards with service('adminAuth') and service('customerAuth').
+ * Get the guard with service('adminAuth').
  */
 class Guard
 {

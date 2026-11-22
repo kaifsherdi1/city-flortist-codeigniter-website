@@ -89,16 +89,12 @@ final class SeparateDomainsTest extends FeatureTestCase
         $this->assertStatusCode($res, 302);
         $this->assertStringStartsWith('https://admin.example.com/login?error=', $res->response()->getHeaderLine('Location'));
 
-        $res = $this->getJson('/api/account/oauth/google');
-        $this->assertStatusCode($res, 302);
-        $this->assertStringStartsWith('https://example.com/login?error=', $res->response()->getHeaderLine('Location'));
     }
 
     public function test_google_callbacks_are_on_the_api_domain(): void
     {
         $google = new GoogleOAuth(config(Florist::class));
         $this->assertSame('https://api.example.com/api/admin/oauth/google/callback', $google->adminCallbackUrl());
-        $this->assertSame('https://api.example.com/api/account/oauth/google/callback', $google->customerCallbackUrl());
     }
 
     public function test_page_urls_on_the_api_domain_redirect_to_the_sites(): void

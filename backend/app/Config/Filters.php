@@ -5,7 +5,6 @@ namespace Config;
 use App\Filters\AdminAuth;
 use App\Filters\ApiCors;
 use App\Filters\ApiThrottle;
-use App\Filters\CustomerAuth;
 use App\Filters\PostSize;
 use App\Filters\SecurityHeaders;
 use App\Filters\SessionCsrf;
@@ -24,9 +23,8 @@ use CodeIgniter\Filters\SecureHeaders;
  * Which filters run where. The route groups in Config\Routes pick the City Florist filters:
  *   postsize    413 when an upload is bigger than PHP's post_max_size (PHP would silently drop it)
  *   apithrottle public website API: 240 requests a minute per device
- *   session     dashboard and customer accounts: session cookie + CSRF check (X-XSRF-TOKEN header)
+ *   session     dashboard: session cookie + CSRF check (X-XSRF-TOKEN header)
  *   admin       dashboard login required (admin:owner = owner only, admin:starting-ok = before the first password change)
- *   customer    customer login required
  */
 class Filters extends BaseFilters
 {
@@ -51,7 +49,6 @@ class Filters extends BaseFilters
         'apithrottle'     => ApiThrottle::class,
         'session'         => SessionCsrf::class,
         'admin'           => AdminAuth::class,
-        'customer'        => CustomerAuth::class,
         'apicors'         => ApiCors::class,
     ];
 

@@ -4,9 +4,9 @@ Website and shop-owner dashboard for City Florist: flower bouquets, chocolate bo
 
 | Folder | What it is | Tech |
 | --- | --- | --- |
-| `frontend-user/` | Public website: 3D hero, scroll animations, shop, product pages, Buy → WhatsApp, customer accounts | React 19, Vite, Three.js (React Three Fiber), GSAP + ScrollTrigger, Lenis |
+| `frontend-user/` | Public website: 3D hero, scroll animations, shop, product pages, Buy → WhatsApp (no customer accounts) | React 19, Vite, Three.js (React Three Fiber), GSAP + ScrollTrigger, Lenis |
 | `frontend-dashboard/` | Owner dashboard (`admin.cityfloristhubli.com`; `/admin` in development): products, photos, prices, daily offers, orders, reviews, settings | React 19 (mobile friendly), Vite |
-| `backend/` | CodeIgniter app: public API (`/api`), dashboard API (`/api/admin`), customer accounts (`/api/account`), database migrations, seed photos, image processing | CodeIgniter 4.7, PHP 8.2+ (`intl`, `gd`, `mysqli`, `mbstring`), MySQL / MariaDB |
+| `backend/` | CodeIgniter app: public API (`/api`), dashboard API (`/api/admin`), database migrations, seed photos, image processing | CodeIgniter 4.7, PHP 8.2+ (`intl`, `gd`, `mysqli`, `mbstring`), MySQL / MariaDB |
 
 Three separate apps. Each React app has its own `package.json` and Vite build (`dist/index.html` + assets). On the live site each has its own address: the website on `cityfloristhubli.com`, the dashboard on `admin.cityfloristhubli.com` and the API on `api.cityfloristhubli.com`, sharing the login cookies through `cookie.domain = .cityfloristhubli.com`. In development the Vite servers pass `/api` and `/admin` through, so everything opens on `localhost:5173`.
 
@@ -17,7 +17,7 @@ The backend was first written in Laravel. This CodeIgniter version answers every
 1. The customer taps **Buy** on any product.
 2. A form asks for their name and mobile number, plus an optional date and message.
 3. `POST /api/orders` saves the order. The server takes the price from the database, so it can't be changed in the browser.
-4. The customer is sent to `wa.me/<owner number>` with the full order already typed: order number, product, category, price, name, phone, and the date and note if given. They press **Send**.
+4. The customer is sent to `wa.me/<owner number>` with the full order already typed: order number, product, category, price, name, phone, the date and note if given, and a product link (`api…/p/<slug>`) that WhatsApp shows as a preview with the product's photo, so the owner sees exactly which bouquet is meant. They press **Send**.
 5. The order also appears in **Admin → Orders**, so the owner can follow up even if the customer never pressed Send.
 
 ## Local development
@@ -64,7 +64,6 @@ Backend tests: `cd backend && composer test` (they use the `cityflorist_ci_test`
 | `GET /api/products` · `?cat=<slug>` · `?slug=<slug>` | Shop list, one category, one product + related |
 | `POST /api/orders` | Save an order, returns the WhatsApp link |
 | `POST /api/reviews` | A customer review; it shows on the site once the owner approves it |
-| `/api/account/*` | Customer accounts on the website: register, log in, order history |
 | `/api/admin/*` | Dashboard: session login with a CSRF token from the `XSRF-TOKEN` cookie (see [backend/app/Config/Routes.php](backend/app/Config/Routes.php)) |
 
 ## Hosting on Hostinger
@@ -147,7 +146,7 @@ Before handing over, on the live site:
 | Two-step login (optional) | Authenticator-app codes (RFC 6238), each accepted once; 10 one-time backup codes stored as hashes; the secret is encrypted with `encryption.key` (`App\Libraries\Crypto`: AES-256-CBC + HMAC-SHA256, the format Laravel used, so Laravel-era secrets still open) |
 | Guessing | 8 wrong passwords per device or per account → 15-minute lock; 6 wrong codes → 15-minute lock; reset emails throttled. Counted by `App\Libraries\RateLimiter` in `writable/cache`. The per-account counter follows the account itself, so typing the same login another way (`ADMIN`, `+91 98765 43210`, the email) doesn't reset it |
 | Visitor IP | `REMOTE_ADDR`. Only with `florist.trustedProxies` set is `X-Forwarded-For` read, from the right and skipping those proxies (`App\Libraries\ClientIp`), so a visitor can't pick their own IP to dodge the limits |
-| Google sign-in | Only verified Google emails. When "Continue with Google" joins a customer account that was made with a password, that password stops working (the email was never checked at sign-up, so it may have been someone else's) |
+| Google sign-in | Dashboard only, and only verified Google emails. (The website has no customer accounts: customers order on WhatsApp without signing up.) Previously: when "Continue with Google" joined a customer account that was made with a password, that password stopped working (the email was never checked at sign-up, so it may have been someone else's) |
 | Installer | Locked once an admin exists; on the live site (`CI_ENVIRONMENT = production`) it refuses the example password |
 | Prices | Always taken from the database; whatever the browser sends is ignored |
 | Uploads | Every photo is decoded and re-saved as WebP (GD) under a random name, so a disguised file can't run. Scripts are blocked in `uploads/` |

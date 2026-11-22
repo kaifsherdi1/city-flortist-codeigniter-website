@@ -3,9 +3,6 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { gsap, getLenis, lockScroll, scrollTo } from '../lib/motion.js';
 import { directionsUrl, useSite } from '../lib/site.jsx';
 import { waLink } from '../lib/api.js';
-import { useAccount } from '../lib/account.jsx';
-import Magnetic from './Magnetic.jsx';
-import { WhatsAppIcon } from './OrderModal.jsx';
 
 // Used in the menu until the API answers (or if it can't be reached), so the shop links are always there.
 const DEFAULT_CATEGORIES = [
@@ -19,25 +16,11 @@ const DEFAULT_CATEGORIES = [
   { slug: 'wholesale-flowers', name: 'Wholesale Flowers' },
 ];
 
-function AccountIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
-    </svg>
-  );
-}
-
 export default function Header() {
   const { settings, categories } = useSite();
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  // Customer account (the owner and staff use the separate dashboard: "Staff login" in the footer).
-  const { customer } = useAccount();
-  const signedIn = Boolean(customer);
-  const accountLabel = signedIn ? 'My account' : 'Sign in';
-  const accountTo = signedIn ? '/account' : '/login';
   const menu = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -55,6 +38,15 @@ export default function Header() {
   }, []);
 
   useEffect(() => setOpen(false), [location.pathname, location.search]);
+
+  // The menu is for narrow screens (see .burger in global.css). Widening the window past that closes it,
+  // so the page isn't left scroll-locked behind a hidden menu.
+  useEffect(() => {
+    const wide = window.matchMedia('(min-width: 900px)');
+    const close = () => wide.matches && setOpen(false);
+    wide.addEventListener('change', close);
+    return () => wide.removeEventListener('change', close);
+  }, []);
 
   useEffect(() => {
     lockScroll(open);
@@ -105,14 +97,6 @@ export default function Header() {
           <a href="#contact" onClick={goSection('#contact')}>Visit us</a>
         </nav>
         <div className="header-actions">
-          <Magnetic>
-            <a className="btn btn-outline btn-sm header-wa" href={enquiry} target="_blank" rel="noreferrer" data-cursor="Chat">
-              <WhatsAppIcon /> <span>Order on WhatsApp</span>
-            </a>
-          </Magnetic>
-          <Link className={`header-account${signedIn ? ' is-signed-in' : ''}`} to={accountTo} aria-label={accountLabel} data-tip={accountLabel} data-cursor={accountLabel}>
-            <AccountIcon />
-          </Link>
           <button className={`burger ${open ? 'is-open' : ''}`} onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>
             <span />
             <span />
@@ -158,9 +142,6 @@ export default function Header() {
               Get directions →
             </a>
             <a href={enquiry} target="_blank" rel="noreferrer">WhatsApp us →</a>
-            <Link className="menu-account" to={accountTo}>
-              <AccountIcon /> {accountLabel}
-            </Link>
           </div>
         </div>
       )}

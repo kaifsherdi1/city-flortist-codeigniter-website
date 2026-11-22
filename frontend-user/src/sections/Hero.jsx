@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGSAP } from '@gsap/react';
-import { gsap, reducedMotion } from '../lib/motion.js';
+import { gsap, isPhoneLike, reducedMotion } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 import { waLink } from '../lib/api.js';
 import { onReady } from '../components/Preloader.jsx';
@@ -19,8 +19,9 @@ export default function Hero() {
 
   // The 3D petals are decoration: load them only after the intro has played and the browser is idle,
   // so three.js never competes with the first paint, the hero photo or the intro animation.
+  // Phones skip them: three.js on a phone's CPU/GPU cost seconds of frozen page and choppy scrolling.
   useEffect(() => {
-    if (reducedMotion()) return;
+    if (reducedMotion() || isPhoneLike()) return;
     let idle;
     const start = () => {
       const ric = window.requestIdleCallback || ((fn) => setTimeout(fn, 400));

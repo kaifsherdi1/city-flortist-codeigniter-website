@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { del, localInput, post, upload } from '../api.js';
 import { useFlash, useLoad, useReport } from '../session.jsx';
 import { Loading } from '../components/Layout.jsx';
+import Pager, { usePaged } from '../components/Pager.jsx';
 
 function blankOffer() {
   const end = new Date();
@@ -36,6 +37,7 @@ export default function Offers() {
   const flash = useFlash();
   const report = useReport();
   const [data, reload, error] = useLoad('offers');
+  const paged = usePaged(data?.offers);
   const [offer, setOffer] = useState(blankOffer);
   const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -106,7 +108,7 @@ export default function Offers() {
                 <table>
                   <thead><tr><th>Offer</th><th>Discount</th><th>Applies to</th><th>Runs</th><th>Status</th><th></th></tr></thead>
                   <tbody>
-                    {data.offers.map((o) => (
+                    {paged.slice.map((o) => (
                       <tr key={o.id}>
                         <td><b>{o.title}</b><br /><small className="muted">{o.subtitle}</small></td>
                         <td>{o.discount_pct}%</td>
@@ -124,6 +126,7 @@ export default function Offers() {
                 </table>
               </div>
             )}
+            <Pager page={paged.page} pages={paged.pages} onChange={paged.setPage} />
           </section>
 
           <form ref={formRef} id="new" className="card form-grid" onSubmit={save}>

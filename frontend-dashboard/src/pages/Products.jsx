@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { del, post } from '../api.js';
 import { useFlash, useLoad } from '../session.jsx';
 import { Loading } from '../components/Layout.jsx';
+import Pager, { usePaged } from '../components/Pager.jsx';
 
 export default function Products() {
   const flash = useFlash();
@@ -15,6 +16,7 @@ export default function Products() {
   const [cats] = useLoad('categories');
   const query = new URLSearchParams({ q, cat, ...(unpriced ? { unpriced: '1' } : {}), ...(featured ? { featured: '1' } : {}) }).toString();
   const [data, reload, error] = useLoad(`products?${query}`);
+  const paged = usePaged(data?.products);
 
   // Editable copy of the list, sent as a whole by "Save all changes".
   const [rows, setRows] = useState({});
@@ -37,6 +39,7 @@ export default function Products() {
 
   const setFilter = (key, value) => {
     const next = new URLSearchParams(params);
+    next.delete('page');
     if (value) next.set(key, value);
     else next.delete(key);
     setParams(next, { replace: true });
@@ -99,7 +102,7 @@ export default function Products() {
       ) : (
         <form onSubmit={saveAll}>
           <div className="product-list">
-            {data.products.map((p) => {
+            {paged.slice.map((p) => {
               const r = rows[p.id];
               if (!r) return null;
               return (
@@ -130,6 +133,7 @@ export default function Products() {
               );
             })}
           </div>
+          <Pager page={paged.page} pages={paged.pages} onChange={paged.setPage} />
           {data.products.length ? (
             <div className="sticky-save">
               <button className="btn" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save all changes'}</button>

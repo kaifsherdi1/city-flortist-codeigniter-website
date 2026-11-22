@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap, reducedMotion } from '../lib/motion.js';
+import { gsap, reducedMotion, useLazyGSAP } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 import Photo from '../components/Photo.jsx';
 
@@ -11,7 +10,7 @@ export default function Collections() {
   const categories = useSite().categories.filter((c) => c.slug !== 'wholesale-flowers');
   const root = useRef(null);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (!categories.length || reducedMotion()) return;
       const mm = gsap.matchMedia();

@@ -373,6 +373,9 @@ tbody tr:hover { background: var(--card-2); }
 .pager { display: flex; gap: 6px; margin-top: 20px; flex-wrap: wrap; }
 .pager a, .pager button { min-width: 38px; height: 38px; padding: 0 12px; border: 0; border-radius: 10px; color: var(--text-2); background: var(--card); box-shadow: var(--shadow); font: 500 .85rem var(--font); cursor: pointer; }
 .pager a.active, .pager button.active { background: var(--primary); color: #fff; }
+.pager button:disabled { opacity: .4; cursor: default; }
+.pager button[aria-label] { font-size: 1.25rem; line-height: 1; }
+.pager .gap { min-width: 24px; height: 38px; display: grid; place-items: center; color: var(--muted); }
 
 /* ---------- Settings ---------- */
 .cat-row { display: grid; grid-template-columns: 54px 190px 1fr 74px 210px; gap: 12px; align-items: center; margin-bottom: 12px; }

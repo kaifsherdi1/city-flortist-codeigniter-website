@@ -88,30 +88,15 @@ $routes->group('api/admin', ['filter' => ['postsize', 'session', 'admin:owner']]
 });
 
 // ---------------------------------------------------------------------------------------------------------
-// Customer accounts on the website (frontend-user): /api/account/*. Session + CSRF like the dashboard, but a
-// separate login: a customer account never opens the dashboard.
-// ---------------------------------------------------------------------------------------------------------
-$routes->group('api/account', ['filter' => ['postsize', 'session']], static function (RouteCollection $routes): void {
-    $routes->get('status', 'Api\Account::status');
-    $routes->post('register', 'Api\Account::register');
-    $routes->post('login', 'Api\Account::login');
-    $routes->post('logout', 'Api\Account::logout');
-    $routes->get('oauth/google', 'Api\Account::googleRedirect');
-    $routes->get('oauth/google/callback', 'Api\Account::googleCallback');
-});
-
-$routes->group('api/account', ['filter' => ['postsize', 'session', 'customer']], static function (RouteCollection $routes): void {
-    $routes->get('orders', 'Api\Account::orders');
-    $routes->post('orders', 'Api\Account::order');
-});
-
-// ---------------------------------------------------------------------------------------------------------
 // The React apps, built into public/ (index.html + assets/, admin.html + admin-assets/). On Hostinger,
 // public/.htaccess serves these files directly; these routes cover `php spark serve` and other servers.
 // Anything else that isn't a file is a React route: see Web::notFound (Config\Routing::$override404).
 // ---------------------------------------------------------------------------------------------------------
 $routes->get('up', 'Web::health');
 $routes->get('sitemap.xml', 'Web::sitemap');
+// Product links in WhatsApp order messages: the chat previews the product's photo (App\Controllers\Share).
+$routes->get('p/(:segment)/photo.jpg', 'Share::photo/$1');
+$routes->get('p/(:segment)', 'Share::product/$1');
 $routes->get('admin', 'Web::admin');
 $routes->get('admin/(:any)', 'Web::admin');
 $routes->get('/', 'Web::index');

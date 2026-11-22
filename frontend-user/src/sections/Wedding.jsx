@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap, reducedMotion } from '../lib/motion.js';
+import { gsap, reducedMotion, useLazyGSAP } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 import { waLink } from '../lib/api.js';
 
@@ -34,7 +33,7 @@ export default function Wedding() {
   const { settings } = useSite();
   const root = useRef(null);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (reducedMotion()) return;
       const cards = gsap.utils.toArray('.wed-card');

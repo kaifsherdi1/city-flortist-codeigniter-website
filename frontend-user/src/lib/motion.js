@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
+import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -34,6 +35,57 @@ export function scrollTo(target) {
 export function lockScroll(locked) {
   if (lenis) locked ? lenis.stop() : lenis.start();
   document.documentElement.classList.toggle('scroll-locked', locked);
+}
+
+/**
+ * Phones and touch tablets. They get a lighter page: no 3D petals, and the scroll animations below the hero
+ * are set up after the page is on screen instead of all at once while it first renders (on a mid-range phone
+ * that first render, with every section measuring the page for its ScrollTriggers, froze it for seconds).
+ * Desktops with a mouse are unaffected.
+ */
+export const isPhoneLike = () => window.matchMedia('(max-width: 899px), (hover: none) and (pointer: coarse)').matches;
+
+const idleQueue = [];
+let pumping = false;
+
+/** Runs queued setups one per idle moment, starting once the preloader has lifted. */
+function pump() {
+  if (pumping) return;
+  pumping = true;
+  const ric = window.requestIdleCallback || ((fn) => setTimeout(fn, 60));
+  const next = () =>
+    ric(
+      () => {
+        const job = idleQueue.shift();
+        if (job && !job.cancelled) job.run();
+        if (idleQueue.length) return next();
+        pumping = false;
+        // Everything is set up: settle all start/end positions once (pinned sections push later ones down).
+        ScrollTrigger.refresh();
+      },
+      { timeout: 700 }
+    );
+  if (window.__cfReady) next();
+  else window.addEventListener('cf:ready', next, { once: true });
+}
+
+/**
+ * useGSAP for sections below the hero. On desktops it is exactly useGSAP. On phones the setup is queued (in page
+ * order) and runs when the browser is idle; it still belongs to the component's GSAP context, so it is reverted on
+ * unmount like any other, and a setup that hasn't run yet is simply dropped.
+ */
+export function useLazyGSAP(setup, config) {
+  return useGSAP((context, contextSafe) => {
+    if (!isPhoneLike()) return setup(context, contextSafe);
+    let cleanup;
+    const job = { cancelled: false, run: contextSafe(() => (cleanup = setup(context, contextSafe))) };
+    idleQueue.push(job);
+    pump();
+    return () => {
+      job.cancelled = true;
+      if (typeof cleanup === 'function') cleanup();
+    };
+  }, config);
 }
 
 export { gsap, ScrollTrigger };

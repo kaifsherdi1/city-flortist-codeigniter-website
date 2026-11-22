@@ -42,7 +42,6 @@ Events::on('pre_system', static function (): void {
     Catalog::flush();
     SessionState::reset();
     service('adminAuth')->flush();
-    service('customerAuth')->flush();
 });
 
 // CodeIgniter's last event: the answer is about to go out. From now on an error must not print a second body

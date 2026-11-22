@@ -218,34 +218,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .nav-desktop a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--gold); transform: scaleX(0); transform-origin: right; transition: transform 0.6s var(--ease); }
 .nav-desktop a:hover::after, .nav-desktop a.active::after { transform: scaleX(1); transform-origin: left; }
 .header-actions { display: flex; align-items: center; gap: 14px; }
-/* Account: icon-only round button (same size as the menu button) with a hover tooltip. */
-.header-account {
-  position: relative; width: 44px; height: 44px; flex: none; border-radius: 50%;
-  display: grid; place-items: center; border: 1px solid var(--line); color: var(--text);
-  transition: color 0.3s, border-color 0.3s, background 0.3s;
-}
-.header-account:hover, .header-account:focus-visible { color: var(--gold-2); border-color: var(--gold-2); background: rgba(255, 255, 255, 0.6); }
-.header-account:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
-.header-account.is-signed-in::before {
-  content: ''; position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%;
-  background: #25a86b; box-shadow: 0 0 0 2px var(--bg, #fff6f7);
-}
-.header-account::after {
-  content: attr(data-tip); position: absolute; top: calc(100% + 10px); left: 50%; translate: -50% -4px;
-  padding: 6px 10px; border-radius: 8px; background: var(--text); color: #fff;
-  font-size: 0.72rem; letter-spacing: 0.04em; white-space: nowrap; pointer-events: none;
-  opacity: 0; transition: opacity 0.2s, translate 0.2s;
-}
-@media (hover: hover) {
-  .header-account:hover::after, .header-account:focus-visible::after { opacity: 1; translate: -50% 0; }
-}
-.menu-account { display: inline-flex; align-items: center; gap: 8px; }
 .burger { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-content: center; gap: 6px; position: relative; z-index: 2; }
 .burger span { display: block; width: 18px; height: 1.5px; background: var(--text); transition: transform 0.5s var(--ease); }
 .burger.is-open span:first-child { transform: translateY(3.75px) rotate(45deg); }
 .burger.is-open span:last-child { transform: translateY(-3.75px) rotate(-45deg); }
 
 .menu { position: fixed; inset: 0; z-index: 99; display: flex; flex-direction: column; justify-content: center; padding: 110px var(--pad) 40px; overflow-y: auto; }
+/* Wide screens show the links in the header bar, so the menu button and its overlay are for phones and tablets only. */
+@media (min-width: 900px) {
+  .burger, .menu { display: none; }
+}
 .menu-bg { position: absolute; inset: 0; background: var(--slate); z-index: -1; }
 .menu-nav { display: flex; flex-direction: column; }
 .menu-mask { overflow: hidden; }
@@ -386,6 +368,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .rtg-copy p { margin: 18px 0 0; max-width: 380px; }
 
 .rtg-stage { grid-area: stage; position: relative; display: grid; place-items: center; perspective: 1500px; perspective-origin: 50% 40%; z-index: 1; }
+/* Phones swipe the ring sideways (ReadyToGo.jsx); vertical swipes still scroll the page. */
+@media (max-width: 899px), (hover: none) and (pointer: coarse) {
+  .rtg-stage { touch-action: pan-y; }
+}
 .rtg-tilt { position: relative; width: var(--card-w); aspect-ratio: 2 / 3; transform-style: preserve-3d; transform: rotateX(-6deg); }
 .rtg-ring { position: absolute; inset: 0; transform-style: preserve-3d; }
 .rtg-card {
@@ -625,51 +611,13 @@ a.score:hover { border-color: var(--gold); }
 /* Big signature: letters flip up in 3D */
 .footer-word { display: flex; justify-content: center; overflow: hidden; font-size: clamp(5rem, 20vw, 22rem); line-height: 1.25; color: var(--gold-2); padding: 40px 0 0; white-space: nowrap; perspective: 1200px; }
 .footer-word .c { display: inline-block; transform-origin: 50% 100%; background: linear-gradient(180deg, var(--gold-2), #d97b97); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.footer-bar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; padding-block: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8rem; }
-.footer-legal { display: flex; gap: 18px; }
-.footer-legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
-.footer-legal a:hover { color: var(--gold-2); }
+/* © on the left, the credit in the true centre of the page (the empty third column balances the first). */
+.footer-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px 24px; padding-block: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8rem; }
+.footer-credit { text-align: center; }
+@media (max-width: 767px) {
+  .footer-bar { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+}
 .order-fine a { color: var(--gold-2); text-decoration: underline; text-underline-offset: 2px; }
-
-/* ---------------------------------------------------------------- Customer accounts: register, log in, my account */
-.auth { display: grid; justify-items: center; padding-top: clamp(110px, 14vw, 150px); padding-bottom: clamp(60px, 10vw, 110px); }
-.auth-box { width: min(480px, 100%); padding: clamp(24px, 4vw, 38px); border-radius: 28px; background: linear-gradient(160deg, #ffffff, #fff1f4); border: 1px solid rgba(178, 76, 108, 0.16); box-shadow: 0 30px 70px -40px var(--shadow); }
-.auth-box h1 { font-size: clamp(2rem, 5vw, 2.8rem); margin: 8px 0 6px; }
-.auth-box > .muted { margin: 0 0 22px; }
-.auth-box form { margin-top: 4px; }
-.btn-google { width: 100%; --h: 52px; gap: 10px; background: #fff; color: var(--text); border: 1px solid var(--line); margin-top: 14px; }
-.btn-google::before { background: var(--blush); }
-.btn-google:hover { color: var(--text); }
-.btn-google[disabled] { opacity: 0.55; cursor: not-allowed; }
-.auth-or { display: flex; align-items: center; gap: 12px; margin: 20px 0 16px; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.pw-input { position: relative; }
-.pw-input input { padding-right: 50px; }
-.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
-.pw-eye:hover { color: var(--gold-2); background: var(--blush); }
-.pw-eye:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 1px; }
-.auth-check { display: flex; align-items: center; gap: 10px; margin: -4px 0 16px; font-size: 0.88rem; color: var(--text-soft); cursor: pointer; }
-.auth-check input { width: 18px; height: 18px; accent-color: var(--gold-2); }
-.auth-submit { width: 100%; --h: 54px; margin-top: 4px; }
-.auth-fine { margin: 14px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
-.auth-fine a, .auth-switch a { color: var(--gold-2); text-decoration: underline; text-underline-offset: 3px; }
-.auth-switch { margin: 22px 0 0; text-align: center; font-size: 0.92rem; color: var(--text-soft); }
-.account { max-width: 860px; padding-top: clamp(110px, 14vw, 150px); padding-bottom: clamp(60px, 10vw, 110px); }
-.account-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
-.account-head h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 8px 0 0; overflow-wrap: anywhere; }
-.account-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px; margin: 0 0 40px; }
-.account-details div { padding: 16px 18px; border-radius: 16px; background: var(--slate); box-shadow: 0 18px 40px -32px var(--shadow); }
-.account-details dt { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.account-details dd { margin: 4px 0 0; overflow-wrap: anywhere; }
-.account-title { font: 500 clamp(1.5rem, 3vw, 1.9rem)/1.2 var(--serif); margin: 0 0 14px; }
-.account-orders { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.account-orders li { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 18px; border-radius: 16px; background: var(--slate); }
-.account-orders li > div { display: grid; gap: 2px; }
-.account-orders li > div:last-child { display: flex; align-items: center; gap: 12px; }
-.order-pill { padding: 4px 12px; border-radius: 40px; font-size: 0.78rem; background: var(--blush); color: var(--gold-2); }
-.order-pill.done { background: rgba(29, 122, 78, 0.1); color: #1d6b45; }
-.order-pill.cancelled { background: rgba(0, 0, 0, 0.06); color: var(--muted); }
-.account .review-thanks { margin: 0 0 24px; }
 
 /* ---------------------------------------------------------------- Privacy policy / terms */
 .policy { max-width: 760px; padding-top: clamp(120px, 16vw, 170px); padding-bottom: clamp(60px, 10vw, 110px); }
@@ -695,6 +643,14 @@ a.score:hover { border-color: var(--gold); }
 .shop-tabs sup { font-size: 0.65em; opacity: 0.6; margin-left: 2px; }
 .shop-sort { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
 .shop-sort select { background: var(--slate); color: var(--text); border: 1px solid var(--line); border-radius: 99px; padding: 10px 16px; font: inherit; }
+
+.shop-pages { display: flex; justify-content: space-between; align-items: center; gap: 16px 24px; flex-wrap: wrap; margin-top: clamp(40px, 6vw, 72px); padding-top: 24px; border-top: 1px solid var(--line); font-size: 0.85rem; }
+.pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pager button { min-width: 44px; height: 44px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); font-size: 0.9rem; transition: background 0.4s, color 0.4s, border-color 0.4s; }
+.pager button:hover:not(:disabled) { border-color: var(--gold); }
+.pager button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pager button:disabled { opacity: 0.35; cursor: default; }
+.pager-gap { min-width: 20px; text-align: center; color: var(--muted); }
 
 .skeleton { aspect-ratio: 4 / 5; border-radius: var(--radius); background: linear-gradient(100deg, var(--slate) 30%, var(--slate-2) 50%, var(--slate) 70%); background-size: 300% 100%; animation: shimmer 1.4s linear infinite; }
 .skeleton.tall { aspect-ratio: auto; height: 70vh; }
@@ -838,9 +794,6 @@ a.score:hover { border-color: var(--gold); }
 }
 
 @media (max-width: 767px) {
-  .header-wa span { display: none; }
-  .header-wa { padding: 0; width: 42px; }
-  .header-account { width: 42px; height: 42px; }
   .logo span { font-size: 1.6rem; }
   .logo img { width: 38px; height: 38px; }
 
@@ -867,6 +820,10 @@ a.score:hover { border-color: var(--gold); }
   .shop-tabs { min-width: 0; flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(var(--pad) * -1); padding-inline: var(--pad); scrollbar-width: none; }
   .shop-tabs button { white-space: nowrap; }
   .pd-actions .btn { flex: 1; }
+}
+/* Small phones: "Ask a question" (with its WhatsApp icon) doesn't fit in half the width, so the two buttons stack. */
+@media (max-width: 479px) {
+  .pd-actions .btn { flex: 1 1 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1006,6 +963,25 @@ img.is-contain { position: relative; z-index: 1; object-fit: contain !important;
 /* Tablets: the wedding cards are tall, so centre the copy instead of leaving a gap under the buttons. */
 @media (min-width: 600px) and (max-width: 899px) {
   .wed-copy { justify-content: center; }
+}
+/* Tall tablets (portrait iPad and similar): a 40% photo left ~230px of empty card around the text, so the
+   photo gets more of the card. Shorter screens (landscape phones) keep 40% so the buttons still fit. */
+@media (min-width: 600px) and (max-width: 899px) and (min-height: 800px) {
+  .wed-inner { grid-template-rows: 55% 1fr; }
+}
+/* Phones: centre the copy in the space under the photo (it sat at the top with ~180px empty below). Auto margins
+   rather than justify-content: when the copy doesn't fit they collapse to 0 instead of cutting off the top. */
+@media (max-width: 899px) {
+  .wed-copy > :first-child { margin-top: auto; }
+  .wed-copy > :last-child { margin-bottom: auto; }
+}
+/* Phones held sideways: a screen-high card is only ~280px tall, which cut off the text and buttons. Photo and
+   text sit side by side instead, and the card is as tall as its content. */
+@media (max-width: 899px) and (max-height: 500px) {
+  .wed-card { height: auto; max-height: none; }
+  .wed-inner { grid-template-columns: 0.9fr 1fr; grid-template-rows: none; }
+  .wed-media { min-height: 220px; }
+  .wed-media img { position: absolute; inset: 0; } /* fills the cell; the text, not the photo, sets the height */
 }
 
 /* ==========================================================================

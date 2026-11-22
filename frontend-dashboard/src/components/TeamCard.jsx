@@ -3,8 +3,8 @@ import { useFlash, useLoad, useSession } from '../session.jsx';
 import { Loading } from './Layout.jsx';
 
 /**
- * Settings → Team (owner only). Staff create their own account at /admin/register; it stays "Waiting for
- * approval" until the owner approves it here. Staff can manage products, offers, orders and reviews, but not
+ * Settings → Team (owner only): switch staff accounts on or off, or remove them. (The dashboard has no staff
+ * sign-up page any more, so no new accounts arrive here.) Staff can manage products, offers, orders and reviews, but not
  * shop details, categories or the team.
  */
 export default function TeamCard() {
@@ -37,8 +37,7 @@ export default function TeamCard() {
     <section className="card narrow" id="team">
       <h2>Team</h2>
       <p className="muted">
-        Staff create their own account from the dashboard login page (“Create a staff account”). Nothing opens for them until you approve
-        it here. Staff can manage products, offers, orders and reviews; only you can change shop details, categories and the team.
+        Staff accounts. Staff can manage products, offers, orders and reviews; only you can change shop details, categories and the team.
       </p>
       {!data ? (
         <Loading error={error} retry={reload} />

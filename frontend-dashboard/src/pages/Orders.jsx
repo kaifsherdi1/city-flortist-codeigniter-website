@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { del, formatDate, patch, rupees } from '../api.js';
 import { useFlash, useLoad, useSession } from '../session.jsx';
 import { Loading } from '../components/Layout.jsx';
+import Pager from '../components/Pager.jsx';
 import { API_URL } from '../urls.js';
 
 const STATUSES = { new: 'New', contacted: 'Contacted', done: 'Delivered', cancelled: 'Cancelled' };
@@ -100,13 +101,7 @@ export default function Orders() {
             {!data.orders.length && <p className="muted">No orders here yet.</p>}
           </div>
 
-          {data.pages > 1 && (
-            <nav className="pager">
-              {Array.from({ length: data.pages }, (_, i) => i + 1).map((n) => (
-                <button type="button" key={n} className={n === data.page ? 'active' : ''} onClick={() => go({ status, page: n })}>{n}</button>
-              ))}
-            </nav>
-          )}
+          <Pager page={data.page} pages={data.pages} onChange={(n) => go({ status, page: n })} />
         </>
       )}
     </>

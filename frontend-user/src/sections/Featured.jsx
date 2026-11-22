@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap } from '../lib/motion.js';
+import { gsap, useLazyGSAP } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import SplitText from '../components/SplitText.jsx';
@@ -12,7 +11,7 @@ export default function Featured() {
   const featured = site.featured.length > 3 ? site.featured.slice(0, site.featured.length - (site.featured.length % 3)) : site.featured;
   const root = useRef(null);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (!featured.length) return;
       gsap.from('.featured-head .wi', {

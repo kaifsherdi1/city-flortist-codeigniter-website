@@ -51,7 +51,7 @@ abstract class FeatureTestCase extends CIUnitTestCase
     private bool $skipXsrfOnce = false;
 
     /** Services that keep state or capture config/cache objects: rebuilt for every test (also drops their mocks). */
-    private const FRESH_SERVICES = ['rateLimiter', 'googleOAuth', 'mailer', 'adminAuth', 'customerAuth'];
+    private const FRESH_SERVICES = ['rateLimiter', 'googleOAuth', 'mailer', 'adminAuth'];
 
     /** @var list<string> Temporary files made by photo()/fileWith(), removed after the test. */
     private array $tempFiles = [];
@@ -317,14 +317,6 @@ abstract class FeatureTestCase extends CIUnitTestCase
     {
         unset($this->carriedSession['password_admin']);
         $this->carriedSession['login_admin'] = is_array($admin) ? (int) $admin['id'] : $admin;
-
-        return $this;
-    }
-
-    /** The following requests are made by this customer account. */
-    protected function actingAsCustomer(array|int $customer): static
-    {
-        $this->carriedSession['login_customer'] = is_array($customer) ? (int) $customer['id'] : $customer;
 
         return $this;
     }

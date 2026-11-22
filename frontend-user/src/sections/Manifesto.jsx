@@ -1,6 +1,5 @@
 import { useRef } from 'react';
-import { useGSAP } from '@gsap/react';
-import { gsap } from '../lib/motion.js';
+import { gsap, useLazyGSAP } from '../lib/motion.js';
 
 const TEXT =
   'City Florist is a flower shop near Court Circle in Hubballi. We make fresh flower and chocolate bouquets, decorate wedding cars and rooms, and tie bridal garlands, for birthdays, anniversaries, apologies, proposals and weddings.';
@@ -9,7 +8,7 @@ const TEXT =
 export default function Manifesto() {
   const root = useRef(null);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       gsap.fromTo(
         '.manifesto-text .mw',

@@ -1,6 +1,5 @@
 import { useRef } from 'react';
-import { useGSAP } from '@gsap/react';
-import { gsap } from '../lib/motion.js';
+import { gsap, useLazyGSAP } from '../lib/motion.js';
 
 const STEPS = [
   ['Choose', 'Browse bouquets, chocolate bouquets, décor, garlands, teddies and cakes, or ask us for something custom.'],
@@ -11,7 +10,7 @@ const STEPS = [
 export default function HowToOrder() {
   const root = useRef(null);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       gsap.from('.step', {
         y: 80,

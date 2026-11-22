@@ -56,7 +56,7 @@ class SecurityHeaders implements FilterInterface
         }
         // The owner's dashboard and its API should never appear in search results.
         $path = trim($request->getPath(), '/');
-        if ($path === 'admin' || preg_match('#^(admin|api/admin|api/account)/#', $path . '/') === 1) {
+        if ($path === 'admin' || preg_match('#^(admin|api/admin)/#', $path . '/') === 1) {
             $response->setHeader('X-Robots-Tag', 'noindex, nofollow');
         }
         // The React apps read the CSRF token from this cookie (see SessionState).

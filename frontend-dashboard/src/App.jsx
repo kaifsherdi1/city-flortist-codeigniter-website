@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useSession } from './session.jsx';
 import Layout, { Loading, Screen } from './components/Layout.jsx';
-import Login, { ChoosePassword, ResetPassword, StaffRegister } from './pages/Login.jsx';
+import Login, { ChoosePassword, ResetPassword } from './pages/Login.jsx';
 import Install from './pages/Install.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Products from './pages/Products.jsx';
@@ -50,7 +50,6 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/register" element={<StaffRegister />} />
         <Route path="*" element={<Navigate to="/login" replace state={{ from: location }} />} />
       </Routes>
     );

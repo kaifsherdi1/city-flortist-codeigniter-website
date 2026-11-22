@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap, reducedMotion, isTouch, getLenis } from '../lib/motion.js';
+import { gsap, reducedMotion, isTouch, isPhoneLike, getLenis, useLazyGSAP } from '../lib/motion.js';
 import { useSite } from '../lib/site.jsx';
 import { useOrder } from '../components/OrderModal.jsx';
 import Photo from '../components/Photo.jsx';
@@ -31,7 +30,7 @@ export default function ReadyToGo() {
   // With many, cap the spacing so the ring doesn't grow wider than the screen.
   const step = n >= 5 ? Math.max(360 / n, 24) : 60;
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (!n) return;
       const section = root.current;
@@ -91,6 +90,37 @@ export default function ReadyToGo() {
       });
 
       if (n < 2) return;
+
+      // Phones: no pin. A pinned section lags behind touch scrolling and then jumps, and turning the 3D ring
+      // on every scroll frame was the heaviest work on the page. The dots and a sideways swipe turn it instead.
+      if (isPhoneLike()) {
+        let idx = 0;
+        const turnDirect = api.current.turnTo;
+        api.current = { turnTo: (i) => turnDirect((idx = (i + n) % n)) };
+        const stage = section.querySelector('.rtg-stage');
+        let x0 = null;
+        let y0 = 0;
+        const down = (e) => {
+          x0 = e.clientX;
+          y0 = e.clientY;
+        };
+        const up = (e) => {
+          if (x0 === null) return;
+          const dx = e.clientX - x0;
+          const dy = e.clientY - y0;
+          x0 = null;
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) api.current.turnTo(idx + (dx < 0 ? 1 : -1));
+        };
+        const cancel = () => (x0 = null);
+        stage.addEventListener('pointerdown', down);
+        stage.addEventListener('pointerup', up);
+        stage.addEventListener('pointercancel', cancel);
+        return () => {
+          stage.removeEventListener('pointerdown', down);
+          stage.removeEventListener('pointerup', up);
+          stage.removeEventListener('pointercancel', cancel);
+        };
+      }
 
       // Pinned: each card gets ~45% of a screen of scrolling (more felt like the page was stuck). The turn between two cards is eased, so the
       // ring dwells on each card and then swings to the next, like clicking into place.

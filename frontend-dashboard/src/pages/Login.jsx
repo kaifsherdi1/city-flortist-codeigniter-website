@@ -3,35 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { post, put } from '../api.js';
 import { useSession } from '../session.jsx';
 import { Screen } from '../components/Layout.jsx';
-import Icon from '../components/Icon.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
-import { API_URL } from '../urls.js';
-
-// All three go to the same `login` field; the server works out which one it is.
-const METHODS = {
-  email: { tab: 'Email', icon: 'mail', label: 'Email address', type: 'email', placeholder: 'owner@example.com', autoComplete: 'email', inputMode: 'email' },
-  phone: { tab: 'Phone', icon: 'phone', label: 'Mobile number', type: 'tel', placeholder: '98765 43210', autoComplete: 'tel-national', inputMode: 'tel' },
-  username: { tab: 'Username', icon: 'user', label: 'Username', type: 'text', placeholder: 'admin', autoComplete: 'username', inputMode: 'text' },
-};
-const METHOD_KEY = 'cf-login-method';
-
-function savedMethod() {
-  try {
-    const m = localStorage.getItem(METHOD_KEY);
-    return METHODS[m] ? m : 'username';
-  } catch {
-    return 'username';
-  }
-}
 
 export default function Login() {
   const [params] = useSearchParams();
   const { twoFactorRequired } = useSession();
-  const [view, setView] = useState('login');
-  let body;
-  if (twoFactorRequired) body = <TwoFactorForm />;
-  else if (view === 'forgot') body = <ForgotForm onBack={() => setView('login')} />;
-  else body = <LoginForm initialError={params.get('error')} notice={params.get('notice')} onForgot={() => setView('forgot')} />;
+  const body = twoFactorRequired ? <TwoFactorForm /> : <LoginForm initialError={params.get('error')} notice={params.get('notice')} />;
   return <Screen art>{body}</Screen>;
 }
 
@@ -94,22 +71,10 @@ function TwoFactorForm() {
   );
 }
 
-function LoginForm({ initialError, notice, onForgot }) {
-  const { refresh, loginOptions = {} } = useSession();
-  const [method, setMethod] = useState(savedMethod);
+function LoginForm({ initialError, notice }) {
+  const { refresh } = useSession();
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
-  const m = METHODS[method];
-
-  function pick(key) {
-    setMethod(key);
-    setError(null);
-    try {
-      localStorage.setItem(METHOD_KEY, key);
-    } catch {
-      /* private window: just don't remember it */
-    }
-  }
 
   async function submit(e) {
     e.preventDefault();
@@ -117,7 +82,7 @@ function LoginForm({ initialError, notice, onForgot }) {
     setBusy(true);
     setError(null);
     try {
-      await post('login', { login: form.get('login'), password: form.get('password'), remember: form.get('remember') === 'on' });
+      await post('login', { login: form.get('login'), password: form.get('password'), remember: false });
       await refresh();
     } catch (err) {
       setError(err.message);
@@ -131,159 +96,15 @@ function LoginForm({ initialError, notice, onForgot }) {
       {notice && !error && <div className="flash success" role="status">{notice}</div>}
       {error && <div className="flash error" role="alert">{error}</div>}
 
-      <div className="seg" role="tablist" aria-label="Log in with">
-        {Object.entries(METHODS).map(([key, v]) => (
-          <button key={key} type="button" role="tab" aria-selected={method === key} className={method === key ? 'on' : ''} onClick={() => pick(key)}>
-            <Icon name={v.icon} size={16} /> {v.tab}
-          </button>
-        ))}
-      </div>
-
       <label>
-        {m.label}
-        <span className={`input-wrap${method === 'phone' ? ' has-prefix' : ''}`}>
-          {method === 'phone' && <span className="input-prefix">+91</span>}
-          <input
-            key={method}
-            name="login"
-            type={m.type}
-            inputMode={m.inputMode}
-            placeholder={m.placeholder}
-            autoComplete={m.autoComplete}
-            required
-            autoFocus
-          />
-        </span>
+        Username
+        <input name="login" type="text" placeholder="Your username" autoComplete="username" autoCapitalize="none" spellCheck="false" required autoFocus />
       </label>
       <PasswordInput name="password" autoComplete="current-password" placeholder="Your password" />
 
-      <div className="login-row">
-        <label className="check"><input type="checkbox" name="remember" defaultChecked /> Remember me</label>
-        <button type="button" className="link-btn" onClick={onForgot}>Forgot password?</button>
-      </div>
 
       <button className="btn" type="submit" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
-
-      <div className="or"><span>or</span></div>
-      {loginOptions.google ? (
-        <a className="btn ghost google" href={API_URL + "/api/admin/oauth/google"}><GoogleG /> Continue with Google</a>
-      ) : (
-        <>
-          <button type="button" className="btn ghost google" disabled title="Google sign-in isn't set up on this server yet"><GoogleG /> Continue with Google</button>
-          <p className="hint">Google sign-in isn’t set up on this server yet.</p>
-        </>
-      )}
-      <p className="hint">Email, phone and Google work once they’re saved in <b>Settings → Login details</b>.</p>
-      <p className="hint">New staff member? <Link to="/register">Create a staff account</Link></p>
     </form>
-  );
-}
-
-function ForgotForm({ onBack }) {
-  const { loginOptions = {} } = useSession();
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(null);
-  const [error, setError] = useState(null);
-
-  async function submit(e) {
-    e.preventDefault();
-    const email = new FormData(e.currentTarget).get('email');
-    setBusy(true);
-    setError(null);
-    try {
-      setDone((await post('password/forgot', { email })).message);
-    } catch (err) {
-      setError(err.message);
-    }
-    setBusy(false);
-  }
-
-  return (
-    <form onSubmit={submit} className="login-form">
-      <p className="muted">Reset your password</p>
-      {!loginOptions.reset_by_email && (
-        <div className="flash info">Reset emails aren’t set up on this server yet, so the link may not arrive. Ask whoever manages the website to add the mail settings.</div>
-      )}
-      {error && <div className="flash error" role="alert">{error}</div>}
-      {done ? (
-        <div className="flash success">{done}</div>
-      ) : (
-        <>
-          <label>
-            Email on your account
-            <input name="email" type="email" required autoFocus autoComplete="email" placeholder="owner@example.com" />
-          </label>
-          <button className="btn" type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send reset link'}</button>
-        </>
-      )}
-      <button type="button" className="link-btn back" onClick={onBack}>← Back to log in</button>
-    </form>
-  );
-}
-
-/**
- * /admin/register: a staff member asks for a dashboard account. It stays locked until the owner approves it in
- * Settings → Team, so signing up here gives nobody access on its own.
- */
-export function StaffRegister() {
-  const [params] = useSearchParams();
-  const { loginOptions = {} } = useSession();
-  const [form, setForm] = useState({ username: '', email: '', phone: '', password: '', password_confirmation: '', website: '' });
-  const [error, setError] = useState(params.get('error') || '');
-  const [done, setDone] = useState('');
-  const [busy, setBusy] = useState(false);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  async function submit(e) {
-    e.preventDefault();
-    if (form.password !== form.password_confirmation) return setError('The two passwords don’t match.');
-    setBusy(true);
-    setError('');
-    try {
-      setDone((await post('register', form)).message);
-    } catch (err) {
-      setError(err.message);
-    }
-    setBusy(false);
-  }
-
-  return (
-    <Screen art>
-      <form onSubmit={submit} className="login-form" autoComplete="on">
-        <p className="muted">Create a staff account</p>
-        {done ? (
-          <>
-            <div className="flash success" role="status">{done}</div>
-            <Link className="btn" to="/login">Back to log in</Link>
-          </>
-        ) : (
-          <>
-            <div className="flash info">Your account stays locked until the shop owner approves it.</div>
-            {error && <div className="flash error" role="alert">{error}</div>}
-            <label>User name <input name="username" value={form.username} onChange={set('username')} required minLength="3" maxLength="40" pattern="[A-Za-z0-9._\-]+" title="Letters, numbers, dots, dashes or underscores" autoComplete="username" autoFocus /></label>
-            <label>Email <input type="email" name="email" value={form.email} onChange={set('email')} required autoComplete="email" /></label>
-            <label>
-              Mobile number
-              <span className="input-wrap has-prefix">
-                <span className="input-prefix">+91</span>
-                <input type="tel" name="phone" value={form.phone} onChange={set('phone')} required inputMode="tel" autoComplete="tel-national" placeholder="98765 43210" />
-              </span>
-            </label>
-            <PasswordInput label="Password" name="password" value={form.password} onChange={set('password')} minLength="8" autoComplete="new-password" placeholder="At least 8 characters, letters and a number" />
-            <PasswordInput label="Confirm password" name="password_confirmation" value={form.password_confirmation} onChange={set('password_confirmation')} minLength="8" autoComplete="new-password" />
-            <input className="hp" tabIndex={-1} autoComplete="off" value={form.website} onChange={set('website')} aria-hidden="true" style={{ position: 'absolute', left: -9999 }} />
-            <button className="btn" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create staff account'}</button>
-            <div className="or"><span>or</span></div>
-            {loginOptions.google ? (
-              <a className="btn ghost google" href={API_URL + "/api/admin/oauth/google?intent=register"}><GoogleG /> Sign up with Google</a>
-            ) : (
-              <button type="button" className="btn ghost google" disabled title="Google sign-in isn't set up on this server yet"><GoogleG /> Sign up with Google</button>
-            )}
-          </>
-        )}
-        <Link className="link-btn back" to="/login">← Back to log in</Link>
-      </form>
-    </Screen>
   );
 }
 
@@ -372,16 +193,5 @@ export function ChoosePassword() {
         <button type="button" className="link-btn back" onClick={logout}>Log out</button>
       </form>
     </Screen>
-  );
-}
-
-function GoogleG() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
-      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
-    </svg>
   );
 }

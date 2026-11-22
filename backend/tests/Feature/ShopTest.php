@@ -132,9 +132,8 @@ final class ShopTest extends FeatureTestCase
         $this->assertSame('919876543210', $order['customer_phone']);
         $this->assertStringStartsWith('https://wa.me/919900094843?text=', $this->json($res, 'whatsapp'));
         $this->assertStringContainsString('*Price:* ₹1,000', $this->json($res, 'message'));
-        // Just the order details: no photo link and no product-page link.
-        $this->assertStringNotContainsString('*Photo:*', $this->json($res, 'message'));
-        $this->assertStringNotContainsString('http', $this->json($res, 'message'));
+        // Ends with the product link, which WhatsApp previews with the product's photo.
+        $this->assertStringEndsWith("\n\n*Photo:* " . rtrim(config('App')->baseURL, '/') . '/p/' . $p['slug'], $this->json($res, 'message'));
     }
 
     public function test_order_validation_and_honeypot(): void

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useGSAP } from '@gsap/react';
-import { gsap } from '../lib/motion.js';
+import { gsap, useLazyGSAP } from '../lib/motion.js';
 import { api, isStaticOnly, productsNow, sameAsSnapshot } from '../lib/api.js';
 import Photo from '../components/Photo.jsx';
 
@@ -29,7 +28,7 @@ export default function Gallery() {
       .catch(() => {});
   }, []);
 
-  useGSAP(
+  useLazyGSAP(
     () => {
       if (!images.length) return;
       // Columns slide past each other: the outer two rise, the middle one sinks (yPercent of each

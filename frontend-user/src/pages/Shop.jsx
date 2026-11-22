@@ -2,14 +2,17 @@ import { usePageMeta } from '../lib/seo.js';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Flip } from 'gsap/Flip';
-import { gsap, ScrollTrigger } from '../lib/motion.js';
+import { gsap, ScrollTrigger, reducedMotion, scrollTo } from '../lib/motion.js';
 import { api, waLink } from '../lib/api.js';
 import { useSite } from '../lib/site.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import SplitText from '../components/SplitText.jsx';
+import Pager from '../components/Pager.jsx';
 import { WhatsAppIcon } from '../components/OrderModal.jsx';
 
 gsap.registerPlugin(Flip);
+
+const PER_PAGE = 10;
 
 export default function Shop() {
   const { settings } = useSite();
@@ -39,6 +42,28 @@ export default function Shop() {
     return l;
   }, [data.products, cat, sort]);
 
+  // ?page= keeps the page across reloads and the back button; a page past the end shows the last one.
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+  const page = Math.min(Math.max(1, Number(params.get('page')) || 1), pages);
+  const pageItems = useMemo(() => list.slice((page - 1) * PER_PAGE, page * PER_PAGE), [list, page]);
+
+  const goToPage = (n) => {
+    const next = new URLSearchParams(params);
+    if (n > 1) next.set('page', String(n));
+    else next.delete('page');
+    setParams(next);
+    scrollTo('#shop-results');
+  };
+
+  const changeSort = (value) => {
+    setSort(value);
+    if (params.get('page')) {
+      const next = new URLSearchParams(params);
+      next.delete('page');
+      setParams(next, { replace: true });
+    }
+  };
+
   usePageMeta({
     title: current ? `${current.name} in Hubballi` : 'Shop Bouquets, Decoration, Garlands & Cakes',
     description: current
@@ -47,11 +72,16 @@ export default function Shop() {
   });
 
   const choose = (slug) => {
-    if (grid.current) flipState.current = Flip.getState(grid.current.querySelectorAll('.product-card'));
+    if (grid.current) {
+      const cards = grid.current.querySelectorAll('.product-card');
+      gsap.set(cards, { opacity: 1, y: 0, overwrite: true }); // cards still waiting to scroll into view
+      flipState.current = Flip.getState(cards);
+    }
     setParams(slug ? { cat: slug } : {});
   };
 
-  // Animate cards from their old positions to the new layout.
+  // Category change: animate cards from their old positions to the new layout.
+  // Otherwise each card fades up only when it scrolls into view.
   useLayoutEffect(() => {
     if (!grid.current) {
       flipState.current = null;
@@ -70,10 +100,16 @@ export default function Shop() {
         onComplete: () => ScrollTrigger.refresh(),
       });
       flipState.current = null;
-    } else if (cards.length) {
-      gsap.fromTo(cards, { opacity: 0, y: 60 }, { opacity: 1, y: 0, stagger: 0.04, duration: 0.9, ease: 'expo.out' });
+    } else if (cards.length && !reducedMotion()) {
+      gsap.set(cards, { opacity: 0, y: 60 });
+      const triggers = ScrollTrigger.batch(cards, {
+        start: 'top 92%',
+        once: true,
+        onEnter: (els) => gsap.to(els, { opacity: 1, y: 0, stagger: 0.08, duration: 0.9, ease: 'expo.out', overwrite: true }),
+      });
+      return () => triggers.forEach((t) => t.kill());
     }
-  }, [list]);
+  }, [pageItems]);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -105,7 +141,7 @@ export default function Shop() {
           </div>
           <label className="shop-sort">
             <span className="muted">Sort</span>
-            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+            <select value={sort} onChange={(e) => changeSort(e.target.value)}>
               <option value="featured">Featured</option>
               <option value="offers">Best offers</option>
               <option value="low">Price: low to high</option>
@@ -115,7 +151,7 @@ export default function Shop() {
         </div>
       </header>
 
-      <section className="container">
+      <section className="container" id="shop-results">
         {loading ? (
           <div className="shop-grid">
             {Array.from({ length: 6 }, (_, i) => (
@@ -123,11 +159,21 @@ export default function Shop() {
             ))}
           </div>
         ) : list.length ? (
-          <div className="shop-grid" ref={grid}>
-            {list.map((p, i) => (
-              <ProductCard product={p} index={i} key={p.id} />
-            ))}
-          </div>
+          <>
+            <div className="shop-grid" ref={grid}>
+              {pageItems.map((p, i) => (
+                <ProductCard product={p} index={i} key={p.id} />
+              ))}
+            </div>
+            {pages > 1 && (
+              <div className="shop-pages">
+                <span className="muted">
+                  {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, list.length)} of {list.length}
+                </span>
+                <Pager page={page} pages={pages} onChange={goToPage} />
+              </div>
+            )}
+          </>
         ) : (
           <div className="empty-state">
             <span className="script">{current?.name || 'Coming soon'}</span>

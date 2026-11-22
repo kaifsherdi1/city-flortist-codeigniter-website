@@ -3,9 +3,7 @@
 namespace Tests\Feature;
 
 use App\Libraries\ClientIp;
-use App\Libraries\GoogleOAuth;
 use App\Models\AdminModel;
-use App\Models\CustomerModel;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\SiteURI;
 use CodeIgniter\HTTP\UserAgent;
@@ -70,56 +68,5 @@ final class HardeningTest extends FeatureTestCase
         $this->assertStatusCode($res, 429);
     }
 
-    public function test_customer_lock_follows_the_account_too(): void
-    {
-        $this->install();
-        $this->postJson('/api/account/register', [
-            'username' => 'priya_p', 'email' => 'priya@example.com', 'phone' => '9876543210',
-            'password' => 'Roses2026', 'password_confirmation' => 'Roses2026',
-        ]);
-        $this->newBrowser();
-        foreach (['priya_p', 'PRIYA_P', 'priya@example.com', '98765 43210', '+91 98765 43210', '09876543210', 'Priya_P', 'PRIYA@EXAMPLE.COM'] as $i => $login) {
-            $this->fromIp("10.0.1.{$i}");
-            $this->assertStatusCode($this->postJson('/api/account/login', ['login' => $login, 'password' => "Wrong{$i}x"]), 422);
-        }
-        $this->fromIp('10.0.1.99');
-        $this->assertStatusCode($this->postJson('/api/account/login', ['login' => 'priya_p', 'password' => 'Roses2026']), 429);
-    }
 
-    public function test_google_linking_an_account_made_with_a_password_ends_that_password(): void
-    {
-        $this->install();
-        // Someone registers with an email that isn't theirs and a password they know.
-        $this->postJson('/api/account/register', [
-            'username' => 'squatter', 'email' => 'victim@example.com', 'phone' => '9876543210',
-            'password' => 'Roses2026', 'password_confirmation' => 'Roses2026', 'remember' => true,
-        ]);
-        $customer = (new CustomerModel())->where('email', 'victim@example.com')->first();
-        $this->assertNotEmpty($customer['remember_token']);
-
-        // The real owner of victim@example.com uses "Continue with Google".
-        $florist                     = config(Florist::class);
-        $florist->googleClientId     = 'id';
-        $florist->googleClientSecret = 'secret';
-        Services::injectMock('googleOAuth', new class ($florist) extends GoogleOAuth {
-            public function user(string $callbackUrl, $request): array
-            {
-                return ['id' => 'g-victim', 'email' => 'victim@example.com', 'email_verified' => true, 'name' => 'Victim'];
-            }
-        });
-        $this->newBrowser();
-        $res = $this->getJson('/api/account/oauth/google/callback');
-        $this->assertSame('/account', $this->location($res));
-
-        $linked = (new CustomerModel())->find($customer['id']);
-        $this->assertSame('g-victim', $linked['google_id']);
-        $this->assertNull($linked['password_hash']);
-        $this->assertNotSame($customer['remember_token'], $linked['remember_token']);
-
-        // The squatter's password no longer opens the account.
-        $this->newBrowser();
-        $res = $this->postJson('/api/account/login', ['login' => 'squatter', 'password' => 'Roses2026']);
-        $this->assertStatusCode($res, 422);
-        $this->assertJsonPath($res, 'error', static fn ($e) => str_contains($e, 'Google'));
-    }
 }

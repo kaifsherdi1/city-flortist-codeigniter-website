@@ -11,8 +11,6 @@ import Home from './pages/Home.jsx';
 import Shop from './pages/Shop.jsx';
 import Product from './pages/Product.jsx';
 import { Privacy, Terms } from './pages/Policy.jsx';
-import { Account, Login, Register } from './pages/Auth.jsx';
-import { AccountProvider } from './lib/account.jsx';
 
 // The preloader only plays when the visitor first lands on the home page.
 const showPreloader = window.location.pathname === '/';
@@ -33,7 +31,6 @@ export default function App() {
 
   return (
     <SiteProvider>
-      <AccountProvider>
       <OrderProvider>
         {showPreloader && <Preloader />}
         <Cursor />
@@ -46,15 +43,11 @@ export default function App() {
             <Route path="/product/:slug" element={<Product />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/account" element={<Account />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
       </OrderProvider>
-      </AccountProvider>
     </SiteProvider>
   );
 }

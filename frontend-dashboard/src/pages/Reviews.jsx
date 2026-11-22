@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { del, formatDate, patch } from '../api.js';
 import { useFlash, useLoad, useSession } from '../session.jsx';
 import { Loading } from '../components/Layout.jsx';
+import Pager, { usePaged } from '../components/Pager.jsx';
 
 const TABS = { pending: 'Waiting', approved: 'On website', hidden: 'Hidden' };
 
@@ -12,6 +13,7 @@ export default function Reviews() {
   const [params, setParams] = useSearchParams();
   const status = TABS[params.get('status')] ? params.get('status') : '';
   const [data, reload, error] = useLoad(`reviews?status=${status}`);
+  const paged = usePaged(data?.reviews);
 
   async function setStatus(r, value) {
     try {
@@ -57,7 +59,7 @@ export default function Reviews() {
         <Loading error={error} retry={reload} />
       ) : (
         <div className="order-list">
-          {data.reviews.map((r) => (
+          {paged.slice.map((r) => (
             <article className="order card" key={r.id}>
               <header>
                 <b><span className="review-stars" aria-label={`${r.rating} stars`}>{'★'.repeat(r.rating)}<span>{'★'.repeat(5 - r.rating)}</span></span> {r.full_name}</b>
@@ -81,6 +83,7 @@ export default function Reviews() {
             </article>
           ))}
           {!data.reviews.length && <p className="muted">No reviews here yet. They arrive from the “Write a review” form on the home page.</p>}
+          <Pager page={paged.page} pages={paged.pages} onChange={paged.setPage} />
         </div>
       )}
     </>

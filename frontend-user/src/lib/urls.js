@@ -12,7 +12,7 @@ export const API_URL = trim(import.meta.env.VITE_API_URL);
 export const ADMIN_URL = trim(import.meta.env.VITE_ADMIN_URL) || '/admin';
 
 /**
- * Cookies (customer login, CSRF token) must go with API calls. On one domain "same-origin" is enough; with the
+ * Cookies must go with API calls. On one domain "same-origin" is enough; with the
  * API on its own subdomain the browser only sends them with "include".
  */
 export const API_CREDENTIALS = API_URL ? 'include' : 'same-origin';

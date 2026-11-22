@@ -15,7 +15,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class Orders extends ApiController
 {
-    private const PER_PAGE = 30;
+    private const PER_PAGE = 10;
 
     /** GET /api/admin/orders?status=&page= */
     public function index(): ResponseInterface

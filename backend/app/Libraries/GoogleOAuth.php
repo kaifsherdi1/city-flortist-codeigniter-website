@@ -39,12 +39,6 @@ class GoogleOAuth
             : rtrim(config('App')->baseURL, '/') . '/api/admin/oauth/google/callback';
     }
 
-    /** The customer accounts' callback URL: <app.baseURL>/api/account/oauth/google/callback. */
-    public function customerCallbackUrl(): string
-    {
-        return rtrim(config('App')->baseURL, '/') . '/api/account/oauth/google/callback';
-    }
-
     /** Where to send the browser to sign in with Google. */
     public function redirectUrl(string $callbackUrl): string
     {

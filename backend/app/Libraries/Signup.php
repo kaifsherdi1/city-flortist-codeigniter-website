@@ -6,14 +6,14 @@ use App\Exceptions\ApiException;
 use CodeIgniter\Model;
 
 /**
- * Checks shared by both register forms (customer accounts and dashboard staff): username, email, mobile,
+ * Checks for the dashboard's staff sign-up form: username, email, mobile,
  * password + confirmation. Returns clean values or stops with {"error": "..."} the forms show as-is.
  */
 class Signup
 {
     /**
      * @param array{username?: mixed, email?: mixed, phone?: mixed, password?: mixed, password_confirmation?: mixed} $fields
-     * @param Model $model The table the account goes in (AdminModel or CustomerModel), for the "already taken" checks
+     * @param Model $model The table the account goes in (AdminModel), for the "already taken" checks
      *
      * @return array{username: string, email: string, phone: string, password: string}
      */

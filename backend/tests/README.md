@@ -21,18 +21,19 @@ vendor/bin/phpunit --filter Login   # only the tests whose name matches
 - PHP needs the `intl` extension. XAMPP: remove the `;` before `extension=intl` in `xampp/php/php.ini`.
 - Photos go to a temporary folder (never `public/uploads/`) and emails are caught, never sent.
 
-## What's here (258 tests)
+## What's here (238 tests)
 
 | Folder / file | What it covers |
 | --- | --- |
-| `tests/Feature/LoginTest.php`, `TwoFactorTest.php`, `SecurityTest.php`, `ErrorResponseTest.php`, `ShopTest.php`, `AccountTest.php`, `CatalogAdminTest.php`, `ReviewTest.php` | The Laravel version's 74 tests, ported one by one (same names, same checks) |
+| `tests/Feature/LoginTest.php`, `TwoFactorTest.php`, `SecurityTest.php`, `ErrorResponseTest.php`, `ShopTest.php`, `CatalogAdminTest.php`, `ReviewTest.php` | The Laravel version's tests, ported one by one (same names, same checks); its customer-account tests went when the website dropped customer accounts |
 | `tests/Feature/FoundationTest.php` | The plumbing: JSON errors, CSRF, security headers, rate limits, the tables, Laravel-compatible encryption |
-| `tests/Feature/HardeningTest.php` | Protections added after the security review of the port (client IP behind a proxy, login locks per account, Google sign-in linking) |
+| `tests/Feature/HardeningTest.php` | Protections added after the security review of the port (client IP behind a proxy, login locks per account) |
+| `tests/Feature/ShareTest.php` | The product link in WhatsApp order messages (`/p/<slug>`) and its preview photo |
 | `tests/Feature/Detailed/` | Endpoint-by-endpoint tests written during the port: every route's answers, messages and error paths, and the `florist:*` commands |
 
 ## Writing one
 
 Tests live in `tests/Feature/` (namespace `Tests\Feature`) and extend `Tests\Support\FeatureTestCase`
 (`tests/_support/FeatureTestCase.php`), which has `install()`, `getJson()` / `postJson()` / `postMultipart()`,
-`actingAsAdmin()` / `actingAsCustomer()`, `assertJsonPath()`, `emails()` and more. `tests/Feature/FoundationTest.php`
+`actingAsAdmin()`, `assertJsonPath()`, `emails()` and more. `tests/Feature/FoundationTest.php`
 shows the style.
